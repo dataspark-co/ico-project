@@ -184,9 +184,9 @@ contract BurnableToken is StandardToken {
 
 contract FlipsiTokenCoin is BurnableToken {
     
-    string public constant NAME = "Flipsi Token";
-    string public constant SYMBOL = "FLP";
-    uint32 public constant DECIMALS = 8;
+    string public constant name = "Flipsi Token";
+    string public constant symbol = "FLP";
+    uint32 public constant decimals = 8;
     uint256 public INITIAL_SUPPLY = 20000000 * 1 ether;
     
     function FlipsiTokenCoin() public {
