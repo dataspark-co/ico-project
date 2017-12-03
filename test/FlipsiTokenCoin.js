@@ -246,5 +246,44 @@ contract('FlipsiTokenCoin', function(accounts) {
     .then(() => asserts.throws(token.transferFrom(holder1, holder3, allowanceValue+1, {from: holder2})))
     ;
   });
+
+  it('should fail if not allowed on transferFrom', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.transfer(holder1, value, {from: OWNER}))
+    .then(() => token.approve(holder2, value, {from: holder1}))
+    .then(() => asserts.throws(token.transferFrom(holder1, holder3, value, {from: holder3})))
+    ;
+  });
+
+// Ownable
+  it('should allow change owner on transferOwnership', () => {
+    return Promise.resolve()
+    .then(() => token.owner())
+    .then(asserts.equal(OWNER))
+    .then(() => token.transferOwnership(holder1, {from: OWNER}))
+    .then(() => token.owner())
+    .then(asserts.equal(holder1))
+    ;
+  });
+  
+  it('should emit OwnershipTransferred event on transferOwnership', () => {
+    return Promise.resolve()
+    .then(() => token.transferOwnership(holder1, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 1);
+      assert.equal(result.logs[0].event, 'OwnershipTransferred');
+      assert.equal(result.logs[0].args.from, OWNER);
+      assert.equal(result.logs[0].args.to, holder1);
+    });
+    ;
+  });
+  
+  it('should fail if not owner on transferOwnership', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.transferOwnership(holder1, {from: holder2})))
+    ;
+  });
   
 });
