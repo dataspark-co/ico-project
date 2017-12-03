@@ -182,7 +182,7 @@ contract BurnableToken is StandardToken {
     }
 }
 
-contract FlipsiTokenCoin is BurnableToken {
+contract FlipsiTokenCoin is BurnableToken, Ownable {
     
     string public constant name = "Flipsi Token";
     string public constant symbol = "FLP";
