@@ -1,4 +1,5 @@
-const SimpleICO = artifacts.require('./SimpleTokenCoin.sol');
+var FlipsiToken = artifacts.require('./FlipsiTokenCoin.sol');
+
 module.exports = deployer => {
-  deployer.deploy(SimpleICO);
+  deployer.deploy(FlipsiToken);
 };
