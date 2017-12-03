@@ -31,17 +31,6 @@ contract('FlipsiTokenCoin', function(accounts) {
     .then(reverter.snapshot);
   });
 
-  it('should have name, symbol and decimals', () => {
-    return Promise.resolve()
-    .then(() => token.name())
-    .then(asserts.equal(TOKENNAME))
-    .then(() => token.symbol())
-    .then(asserts.equal(TOKENSYMBOL))
-    .then(() => token.decimals())
-    .then(asserts.equal(TOKENDECIMALS))
-    ;
-  });
-  
   // ERC179
   it('should have totalSupply after create', () => {
     return Promise.resolve()
@@ -273,8 +262,8 @@ contract('FlipsiTokenCoin', function(accounts) {
     .then(result => {
       assert.equal(result.logs.length, 1);
       assert.equal(result.logs[0].event, 'OwnershipTransferred');
-      assert.equal(result.logs[0].args.from, OWNER);
-      assert.equal(result.logs[0].args.to, holder1);
+      assert.equal(result.logs[0].args.previousOwner, OWNER);
+      assert.equal(result.logs[0].args.newOwner, holder1);
     });
     ;
   });
@@ -285,5 +274,96 @@ contract('FlipsiTokenCoin', function(accounts) {
     .then(() => asserts.throws(token.transferOwnership(holder1, {from: holder2})))
     ;
   });
+  
+// BurnableToken
+  it('should allow burn on burn', () => {
+    const value = 2000;
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.transfer(holder1, value, {from: OWNER}))
+    .then(() => token.burn(burnValue, {from: holder1}))
+    .then(() => token.balanceOf(holder1))
+    .then(asserts.equal(value-burnValue))
+    ;
+  });
+  
+  it('should change totalSupply on burn', () => {
+    const value = 2000;
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.transfer(holder1, value, {from: OWNER}))
+    .then(() => token.burn(burnValue, {from: holder1}))
+    .then(() => token.totalSupply())
+    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    ;
+  });
+  
+  it('should emit Burn event on burn', () => {
+    const value = 2000;
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.transfer(holder1, value, {from: OWNER}))
+    .then(() => token.burn(burnValue, {from: holder1}))
+    .then(result => {
+      assert.equal(result.logs.length, 1);
+      assert.equal(result.logs[0].event, 'Burn');
+      assert.equal(result.logs[0].args.burner, holder1);
+      assert.equal(result.logs[0].args.value.valueOf(), burnValue);
+    });
+  });
+
+  it('should allow owner burn on burn', () => {
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(() => token.balanceOf(OWNER))
+    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    ;
+  });
+  
+  it('should change totalSupply owner burn on burn', () => {
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(() => token.totalSupply())
+    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    ;
+  });
+
+  it('should fail burn zero on burn', () => {
+    const burnValue = 0;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.burn(burnValue, {from: OWNER})))
+    ;
+  });
+  
+  it('should fail burn above balance on burn', () => {
+    const value = 1000;
+    const burnValue = 2000;
+    return Promise.resolve()
+    .then(() => token.transfer(holder1, value, {from: OWNER}))
+    .then(() => asserts.throws(token.burn(burnValue, {from: holder1})))
+    ;
+  });
+  
+  it('should fail owner burn above balance on burn', () => {
+    const burnValue = 2000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.burn(TOTALSUPPLY.add(1), {from: OWNER})))
+    ;
+  });
+
+  // FlipsiTokenCoin
+  it('should have name, symbol and decimals', () => {
+    return Promise.resolve()
+    .then(() => token.name())
+    .then(asserts.equal(TOKENNAME))
+    .then(() => token.symbol())
+    .then(asserts.equal(TOKENSYMBOL))
+    .then(() => token.decimals())
+    .then(asserts.equal(TOKENDECIMALS))
+    ;
+  });
+ 
   
 });
