@@ -42,6 +42,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     ;
   });
   
+  // ERC179
   it('should have totalSupply after create', () => {
     return Promise.resolve()
     .then(() => token.totalSupply())
@@ -113,6 +114,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     ;
   });
 
+  // ERC20
   it('should allow spender on approve', () => {
     const value = 1000;
     return Promise.resolve()
