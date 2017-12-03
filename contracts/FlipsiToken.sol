@@ -187,7 +187,7 @@ contract FlipsiTokenCoin is BurnableToken {
     string public constant name = "Flipsi Token";
     string public constant symbol = "FLP";
     uint32 public constant decimals = 8;
-    uint256 public INITIAL_SUPPLY = 20000000 * 1 ether;
+    uint256 public INITIAL_SUPPLY = 20000000 * 10**8;
     
     function FlipsiTokenCoin() public {
         totalSupply = INITIAL_SUPPLY;
