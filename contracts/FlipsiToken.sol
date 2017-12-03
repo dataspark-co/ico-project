@@ -189,8 +189,8 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     uint32 public constant decimals = 8;
     uint256 public INITIAL_SUPPLY = 20000000 * 10**8;
     
-    function FlipsiTokenCoin() public {
-        totalSupply = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
+    function FlipsiTokenCoin() {
+        totalSupply = initialSupply;
+        balances[msg.sender] = initialSupply;
     }
 }
