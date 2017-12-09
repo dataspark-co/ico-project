@@ -188,9 +188,15 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     string public constant symbol = "FLP";
     uint32 public constant decimals = 8;
     uint256 public initialSupply = 20000000 * 10**8;
+    address public saleAgent;
     
     function FlipsiTokenCoin() {
         totalSupply = initialSupply;
         balances[msg.sender] = initialSupply;
+    }
+
+    function setSaleAgent(address newSaleAgnet) {
+      require(msg.sender == saleAgent || msg.sender == owner);
+      saleAgent = newSaleAgnet;
     }
 }

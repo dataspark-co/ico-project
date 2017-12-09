@@ -3,6 +3,288 @@ pragma solidity ^0.4.18;
 import './FlipsiToken.sol';
 import '../math/SafeMath.sol';
 
+/**
+ * @title Pausable
+ * @dev Base contract which allows to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    
+  event Pause();
+  
+  event Unpause();
+
+  bool public paused = false;
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused {
+    paused = false;
+    Unpause();
+  }
+  
+}
+
+contract CommonSale is Pausable {
+
+  address public multisigWallet;
+  uint public start;
+  uint public period;
+  uint public minPrice;
+  uint public totalTokensMinted;
+  uint public totalHardcap;
+  uint public totalInvested;
+
+  FlipsiTokenCoin public token;
+
+
+  modifier saleIsOn() {
+    require(now >= start && now < lastSaleDate());
+    _;
+  }
+  
+  modifier isUnderHardcap() {
+    require(totalInvested <= totalHardcap);
+    _;
+  }
+
+  // TODO: add require or smth that
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
+  }
+  
+  function setMinPrice(uint newMinPrice) public onlyOwner {
+    minPrice = newMinPrice;
+  }
+  
+  function setToken(address newToken) public onlyOwner {
+    token = FlipsiTokenCoin(newToken);
+  }
+
+  function lastSaleDate() public constant returns(uint) {
+    return start + period * 1 days;
+  }
+   
+   // TODO: update
+  function createTokens() public whenNotPaused payable {
+    require(msg.value >= minPrice);
+    multisigWallet.transfer(msg.value);
+    uint tokens = msg.value.mul(stage.price);
+    token.mint(this, tokens);
+    token.transfer(msg.sender, tokens);
+    totalTokensMinted = totalTokensMinted.add(tokens);
+    totalInvested = totalInvested.add(msg.value);
+    stage.invested = stage.invested.add(msg.value);
+    if(stage.invested >= stage.hardcap) {
+      stage.closed = now;
+    }
+  }
+
+  function() external payable {
+    createTokens();
+  }
+}
+
+
+contract Presale is CommonSale {
+
+  Mainsale public mainsale;
+
+  function setMainsale(address newMainsale) public onlyOwner {
+    mainsale = Mainsale(newMainsale);
+  }
+
+  function setMultisigWallet(address newMultisigWallet) public onlyOwner {
+    multisigWallet = newMultisigWallet;
+  }
+
+  function finishMinting() public whenNotPaused onlyOwner {
+    token.setSaleAgent(mainsale);
+  }
+
+  function() external payable {
+    createTokens();
+  }
+
+  function retrieveTokens(address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(multisigWallet, token.balanceOf(this));
+  }
+
+}
+
+
+contract Mainsale is CommonSale {
+
+  address public foundersTokensWallet;
+  
+  address public bountyTokensWallet;
+  
+  uint public foundersTokensPercent;
+  
+  uint public bountyTokensPercent;
+  
+  uint public percentRate = 100;
+
+  uint public lockPeriod;
+
+  function setLockPeriod(uint newLockPeriod) public onlyOwner {
+    lockPeriod = newLockPeriod;
+  }
+
+  function setFoundersTokensPercent(uint newFoundersTokensPercent) public onlyOwner {
+    foundersTokensPercent = newFoundersTokensPercent;
+  }
+
+  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
+    bountyTokensPercent = newBountyTokensPercent;
+  }
+
+  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
+    foundersTokensWallet = newFoundersTokensWallet;
+  }
+
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
+
+  function finishMinting() public whenNotPaused onlyOwner {
+    uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
+    uint mintedTokens = token.totalSupply();
+    uint summaryFoundersTokens = mintedTokens.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
+    uint totalSupply = summaryFoundersTokens + mintedTokens;
+    uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
+    uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
+    token.mint(this, foundersTokens);
+    token.lock(foundersTokensWallet, lockPeriod * 1 days);
+    token.transfer(foundersTokensWallet, foundersTokens);
+    token.mint(this, bountyTokens);
+    token.transfer(bountyTokensWallet, bountyTokens);
+    totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
+    token.finishMinting();
+  }
+
+}
+
+contract TestConfigurator is Ownable {
+
+  CovestingToken public token; 
+
+  Presale public presale;
+
+  Mainsale public mainsale;
+
+  function deploy() public onlyOwner {
+    token = new CovestingToken();
+
+    presale = new Presale();
+
+    presale.setToken(token);
+    presale.addStage(5,300);
+    presale.setMultisigWallet(0x055fa3f2DAc0b9Db661A4745965DDD65490d56A8);
+    presale.setStart(1507208400);
+    presale.setPeriod(2);
+    presale.setMinPrice(100000000000000000);
+    token.setSaleAgent(presale);	
+
+    mainsale = new Mainsale();
+
+    mainsale.setToken(token);
+    mainsale.addStage(1,200);
+    mainsale.addStage(2,100);
+    mainsale.setMultisigWallet(0x4d9014eF9C3CE5790A326775Bd9F609969d1BF4f);
+    mainsale.setFoundersTokensWallet(0x59b398bBED1CC6c82b337B3Bd0ad7e4dCB7d4de3);
+    mainsale.setBountyTokensWallet(0x555635F2ea026ab65d7B44526539E0aB3874Ab24);
+    mainsale.setStart(1507467600);
+    mainsale.setPeriod(2);
+    mainsale.setLockPeriod(1);
+    mainsale.setMinPrice(100000000000000000);
+    mainsale.setFoundersTokensPercent(13);
+    mainsale.setBountyTokensPercent(5);
+
+    presale.setMainsale(mainsale);
+
+    token.transferOwnership(owner);
+    presale.transferOwnership(owner);
+    mainsale.transferOwnership(owner);
+  }
+
+}
+
+contract Configurator is Ownable {
+
+  CovestingToken public token; 
+  Presale public presale;
+  Mainsale public mainsale;
+
+  function deploy() public onlyOwner {
+    token = new FlipsiTokenCoin();
+    presale = new Presale();
+    presale.setToken(token);
+
+    presale.setStart(1508504400); // TODO: add start of presale
+    presale.setPeriod(7);
+    presale.setMinPrice(100000000000000000);
+    token.setSaleAgent(presale);
+
+
+
+
+
+    mainsale = new Mainsale();
+
+    mainsale.setToken(token);
+    mainsale.setFoundersTokensWallet(0x0);
+    mainsale.setBountyTokensWallet(0x0);
+    mainsale.setStart(1511528400);
+    mainsale.setPeriod(7); // days
+    mainsale.setLockPeriod(30); // 
+    mainsale.setMinPrice(100000000000000000);
+    mainsale.setFoundersTokensPercent(13);
+    mainsale.setBountyTokensPercent(5);
+
+    presale.setMainsale(mainsale);
+
+    token.transferOwnership(owner);
+    presale.transferOwnership(owner);
+    mainsale.transferOwnership(owner);
+  }
+
+}
+
+
+
+
+
+
 
 contract Crowdsale is Ownable {
     using SafeMath for uint;
