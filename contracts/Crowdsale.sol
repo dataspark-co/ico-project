@@ -85,6 +85,7 @@ contract CommonSale is Pausable {
     start = newStart;
   }
 
+  // TODO: add require or smth that
   function setPeriod(uint newPeriod) public onlyOwner {
     period = newPeriod;
   }
@@ -96,6 +97,7 @@ contract CommonSale is Pausable {
     price = newPrice;
   }
   
+// TODO remove 
   function setToken(address newToken) public onlyOwner {
     token = FlipsiTokenCoin(newToken);
   }
@@ -103,7 +105,7 @@ contract CommonSale is Pausable {
   function lastSaleDate() public constant returns(uint) {
     return start + period * 1 days;
   }
-
+// TODO to multisigWallet after sale end
   function createTokens() public saleIsOn whenNotPaused payable {
     require(msg.value >= minPayment);
     multisigWallet.transfer(msg.value);
@@ -185,6 +187,7 @@ contract Presale is CommonSale {
     );
   }
   
+  // TODO bonuses to 10x
   /**
     * Add bonuses for sender regarding bonuses schedule
     * @param tokensAmount - amount of bought tokens without bonuses
@@ -218,7 +221,7 @@ contract Mainsale is CommonSale {
     uint8 fourthPeriodPercent, uint fourthPeriodEndDate
   ) public onlyOwner 
   {
-    bonuses["firsstPeriod"]["percent"] = firstPeriodPercent;
+    bonuses["firstPeriod"]["percent"] = firstPeriodPercent;
     bonuses["firstPeriod"]["endDate"] = firstPeriodEndDate;
     bonuses["secondPeriod"]["percent"] = secondPeriodPercent;
     bonuses["secondPeriod"]["endDate"] = secondPeriodEndDate;
