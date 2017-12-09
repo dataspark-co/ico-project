@@ -152,24 +152,12 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     uint32 public constant decimals = 8;
     uint256 public initialSupply = 20000000 * 10**8;
     
-    uint256 public preSaleAllowance =  700000 * 10**8;      // the number of tokens available for presale
     uint256 public crowdSaleAllowance =  12000000 * 10**8;      // the number of tokens available for crowdsales
     uint256 public bountyAllowance =  1000000 * 10**8;          // the number of tokens available for the bounty program
     
-    address public saleAgent;                   //address of smart-contract what making crowdsale
+    address public crowdSaleAddr;            //address of smart-contract what making crowdsale
     address public bountyAddr;               // the address of a guy who send bounty tokens
     bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
-    
-    function FlipsiTokenCoin() {
-        totalSupply = initialSupply;
-        balances[msg.sender] = initialSupply;
-    }
-
-    function setSaleAgent(address newSaleAgnet) {
-      require(!transferEnabled);
-      require(msg.sender == saleAgent || msg.sender == owner);
-      saleAgent = newSaleAgnet;
-    }
     
      // Modifiers
     modifier onlyWhenTransferEnabled() {
@@ -179,6 +167,43 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         _;
     }
     
+    function FlipsiTokenCoin() {
+        totalSupply = initialSupply;
+        balances[msg.sender] = initialSupply;
+    }
+
+    /**
+     * Associates this token with a current crowdsale, giving the crowdsale
+     * an allowance of tokens from the crowdsale supply. This gives the
+     * crowdsale the ability to call transferFrom to transfer tokens to
+     * whomever has purchased them.
+     *
+     * Note that if _amountForSale is 0, then it is assumed that the full
+     * remaining crowdsale supply is made available to the crowdsale.
+     *
+     * @param _crowdSaleAddr The address of a crowdsale contract that will sell this token
+     * @param _amountForSale The supply of tokens provided to the crowdsale
+     */
+    function setCrowdsale(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
+        require(!transferEnabled);
+        require(_amountForSale <= allowed[_from][msg.sender]);
+
+        // if 0, then full available crowdsale supply is assumed
+        uint amount = (_amountForSale == 0) ? crowdSaleAllowance : _amountForSale;
+
+        // Clear allowance of old, and set allowance of new
+        approve(crowdSaleAddr, 0);
+        approve(_crowdSaleAddr, amount);
+
+        crowdSaleAddr = _crowdSaleAddr;
+    }
+    
+    function setBountyAdminAddr(address _bountyAddr) external onlyOwner {
+        // Clear allowance of old, and set allowance of new
+        approve(bountyAddr, 0);
+        approve(_bountyAddr, amount);
+        bountyAddr = _bountyAddr;
+    }
     
     /**
      * Overrides ERC20 transfer function with modifier that prevents the
@@ -199,5 +224,17 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         approve(crowdSaleAddr, 0);
         approve(preSaleAddr, 0);
         approve(bountyAddr, 0);
+    }
+    
+    /**
+     * Overrides the burn function so that it cannot be called until after
+     * transfers have been enabled.
+     *
+     * @param _value    The amount of tokens to burn in mini-QSP
+     */
+    function burn(uint256 _value) public  {
+        require(transferEnabled || msg.sender == owner);
+        super.burn(_value);
+        Transfer(msg.sender, address(0x0), _value);
     }
 }
