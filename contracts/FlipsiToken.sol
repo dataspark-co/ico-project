@@ -124,6 +124,8 @@ contract StandardToken is ERC20, BasicToken {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
+
+  using SafeMath for uint256;
     
   address public owner;
   
