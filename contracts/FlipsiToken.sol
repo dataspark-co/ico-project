@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import '../math/SafeMath.sol';
+import './Ownable.sol';
 
 /**
  * @title ERC20Basic
@@ -118,46 +119,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-
-  using SafeMath for uint256;
-    
-  address public owner;
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() internal {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
 
 /**
  * @title Burnable Token
@@ -190,7 +151,14 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     string public constant symbol = "FLP";
     uint32 public constant decimals = 8;
     uint256 public initialSupply = 20000000 * 10**8;
-    address public saleAgent;
+    
+    uint256 public preSaleAllowance =  700000 * 10**8;      // the number of tokens available for presale
+    uint256 public crowdSaleAllowance =  12000000 * 10**8;      // the number of tokens available for crowdsales
+    uint256 public bountyAllowance =  1000000 * 10**8;          // the number of tokens available for the bounty program
+    
+    address public saleAgent;                   //address of smart-contract what making crowdsale
+    address public bountyAddr;               // the address of a guy who send bounty tokens
+    bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
     
     function FlipsiTokenCoin() {
         totalSupply = initialSupply;
@@ -198,7 +166,38 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     }
 
     function setSaleAgent(address newSaleAgnet) {
+      require(!transferEnabled);
       require(msg.sender == saleAgent || msg.sender == owner);
       saleAgent = newSaleAgnet;
+    }
+    
+     // Modifiers
+    modifier onlyWhenTransferEnabled() {
+        if (!transferEnabled) {
+            require(msg.sender == bountyAddr || msg.sender == crowdSaleAddr);
+        }
+        _;
+    }
+    
+    
+    /**
+     * Overrides ERC20 transfer function with modifier that prevents the
+     * ability to transfer tokens until after transfers have been enabled.
+     */
+    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    
+    /**
+     * Enables the ability of anyone to transfer their tokens. This can
+     * only be called by the token owner. Once enabled, it is not
+     * possible to disable transfers.
+     */
+    function enableTransfer() external onlyOwner {
+        transferEnabled = true;
+        approve(crowdSaleAddr, 0);
+        approve(preSaleAddr, 0);
+        approve(bountyAddr, 0);
     }
 }
