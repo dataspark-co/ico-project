@@ -99,7 +99,7 @@ contract Presale is CommonSale {
   }
 
   function finishPresale() public whenNotPaused onlyOwner {
-    token.setSaleAgent(mainsale);
+    token.setSaleAgent(mainsale, 20000000*10**8);
   }
 
   /**
@@ -231,7 +231,7 @@ contract Configurator is Ownable {
     presale.setPrice(2500000000000000);
     presale.setMinPayment(100000000000000000);
     presale.setBonuses(25);
-    token.setSaleAgent(presale);
+    token.setSaleAgent(presale,20000000*10**8*10/100);
     presale.transferAllRestrictedTokens(
       0xb3eD172CC64839FB0C0Aa06aa129f402e994e7De, 100, // 10%
       0xb3eD172CC64839FB0C0Aa06aa129f402e994e7De, 100, // 10%

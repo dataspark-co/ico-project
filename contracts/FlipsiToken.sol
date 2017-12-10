@@ -167,7 +167,7 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         _;
     }
     
-    function FlipsiTokenCoin() {
+    function FlipsiTokenCoin() public {
         totalSupply = initialSupply;
         balances[msg.sender] = initialSupply;
     }
@@ -184,9 +184,9 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
      * @param _crowdSaleAddr The address of a crowdsale contract that will sell this token
      * @param _amountForSale The supply of tokens provided to the crowdsale
      */
-    function setCrowdsale(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
+    function setSaleAgent(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
         require(!transferEnabled);
-        require(_amountForSale <= allowed[_from][msg.sender]);
+        require(_amountForSale <= allowed[this][msg.sender]);
 
         // if 0, then full available crowdsale supply is assumed
         uint amount = (_amountForSale == 0) ? crowdSaleAllowance : _amountForSale;
@@ -198,10 +198,10 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         crowdSaleAddr = _crowdSaleAddr;
     }
     
-    function setBountyAdminAddr(address _bountyAddr) external onlyOwner {
+    function setBountyAdminAddr(address _bountyAddr, uint256 _amountForBounty) external onlyOwner {
         // Clear allowance of old, and set allowance of new
         approve(bountyAddr, 0);
-        approve(_bountyAddr, amount);
+        approve(_bountyAddr, _amountForBounty);
         bountyAddr = _bountyAddr;
     }
     
@@ -222,7 +222,7 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     function enableTransfer() external onlyOwner {
         transferEnabled = true;
         approve(crowdSaleAddr, 0);
-        approve(preSaleAddr, 0);
+        //approve(preSaleAddr, 0);
         approve(bountyAddr, 0);
     }
     
