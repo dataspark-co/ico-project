@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import './FlipsiToken.sol';
 import '../math/SafeMath.sol';
 import './Ownable.sol';
-import './Pousable.sol';
+import './Pausable.sol';
 
 
 contract CommonSale is Pausable {
