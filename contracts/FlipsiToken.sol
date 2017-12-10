@@ -158,8 +158,12 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     address public crowdSaleAddr;            //address of smart-contract what making crowdsale
     address public bountyAddr;               // the address of a guy who send bounty tokens
     bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
-    
-     // Modifiers
+
+    event SetSaleAgent(address agent, uint256 value);
+    event SetBountyAdminAddr(address admin, uint256 value);
+    event AllowTransfer();
+
+      // Modifiers
     modifier onlyWhenTransferEnabled() {
         if (!transferEnabled) {
             require(msg.sender == bountyAddr || msg.sender == crowdSaleAddr);
@@ -186,7 +190,7 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
      */
     function setSaleAgent(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
         require(!transferEnabled);
-        require(_amountForSale <= allowed[this][msg.sender]);
+        require(_amountForSale <= crowdSaleAllowance);
 
         // if 0, then full available crowdsale supply is assumed
         uint amount = (_amountForSale == 0) ? crowdSaleAllowance : _amountForSale;
@@ -196,22 +200,31 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         approve(_crowdSaleAddr, amount);
 
         crowdSaleAddr = _crowdSaleAddr;
+
+        SetSaleAgent(_crowdSaleAddr, amount);
     }
     
     function setBountyAdminAddr(address _bountyAddr, uint256 _amountForBounty) external onlyOwner {
         // Clear allowance of old, and set allowance of new
+        require(!transferEnabled);
+        require(_amountForBounty <= bountyAllowance);
+
+        uint amount = (_amountForBounty == 0) ? bountyAllowance : _amountForBounty;
+
         approve(bountyAddr, 0);
-        approve(_bountyAddr, _amountForBounty);
+        approve(_bountyAddr, amount);
         bountyAddr = _bountyAddr;
+
+        SetBountyAdminAddr(_bountyAddr, amount);
     }
     
     /**
      * Overrides ERC20 transfer function with modifier that prevents the
      * ability to transfer tokens until after transfers have been enabled.
      */
-    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
-        return super.transfer(_to, _value);
-    }
+    //function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
+    //    return super.transfer(_to, _value);
+   //}
 
     
     /**
@@ -224,6 +237,8 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         approve(crowdSaleAddr, 0);
         //approve(preSaleAddr, 0);
         approve(bountyAddr, 0);
+
+        AllowTransfer();
     }
     
     /**
@@ -235,6 +250,5 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
     function burn(uint256 _value) public  {
         require(transferEnabled || msg.sender == owner);
         super.burn(_value);
-        Transfer(msg.sender, address(0x0), _value);
     }
 }
