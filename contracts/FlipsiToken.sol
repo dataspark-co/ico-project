@@ -217,16 +217,23 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
 
         SetBountyAdminAddr(_bountyAddr, amount);
     }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+      super.transfer(newOwner, balanceOf(owner));
+      super.transferOwnership(newOwner);
+    }
+
     
     /**
      * Overrides ERC20 transfer function with modifier that prevents the
      * ability to transfer tokens until after transfers have been enabled.
      */
-    //function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
-    //    return super.transfer(_to, _value);
-   //}
+    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
+        return super.transfer(_to, _value);
+    }
 
-    
+    //function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+ 
     /**
      * Enables the ability of anyone to transfer their tokens. This can
      * only be called by the token owner. Once enabled, it is not
