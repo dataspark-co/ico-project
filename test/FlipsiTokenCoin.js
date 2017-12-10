@@ -8,6 +8,7 @@ contract('FlipsiTokenCoin', function(accounts) {
 
   const asserts = Asserts(assert);
   const OWNER = accounts[0];
+  const tokenHolder = OWNER;
   const holder1 = accounts[1];
   const holder2 = accounts[2];
   const holder3 = accounts[3];
@@ -17,6 +18,9 @@ contract('FlipsiTokenCoin', function(accounts) {
   const TOTALTOKENS = 20000000;
   const TOKENDECIMALS = 8;
   const TOTALSUPPLY = web3.toBigNumber(TOTALTOKENS).mul(web3.toBigNumber(10).pow(TOKENDECIMALS)) 
+  const CROWDSALEALLOWANCE = TOTALSUPPLY.mul(60).div(100);
+  const BOUNTYALLOWANCE = TOTALSUPPLY.mul(5).div(100);
+    
     //~ var balance = new BigNumber('131242344353464564564574574567456');
     
   let token;
@@ -48,6 +52,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should allow on transfer', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.balanceOf(holder1))
     .then(asserts.equal(value))
@@ -57,6 +62,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should sub balance of sender on transfer', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.balanceOf(OWNER))
     .then(asserts.equal(TOTALSUPPLY.sub(value)))
@@ -66,6 +72,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should emit Transfer event on transfer', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(result => {
       assert.equal(result.logs.length, 1);
@@ -79,6 +86,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should totalSupply not changed on transfer', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.totalSupply())
     .then(asserts.equal(TOTALSUPPLY))
@@ -87,12 +95,14 @@ contract('FlipsiTokenCoin', function(accounts) {
 
   it('should fail on over TOTALSUPPLY balance on transfer', () => {
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => asserts.throws(token.transfer(holder1, TOTALSUPPLY.add(1), {from: OWNER})))
     ;
   });
   
   it('should fail on empty balance on transfer', () => {
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => asserts.throws(token.transfer(holder2, 1, {from: holder1})))
     ;
   });
@@ -149,6 +159,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should allow transfer on transferFrom', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => token.transferFrom(holder1, holder3, value, {from: holder2}))
@@ -161,6 +172,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const transferValue = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => token.transferFrom(holder1, holder3, transferValue, {from: holder2}))
@@ -174,6 +186,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const allowanceValue = 1000;
     const transferValue = 700;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, allowanceValue, {from: holder1}))
     .then(() => token.transferFrom(holder1, holder3, transferValue, {from: holder2}))
@@ -185,6 +198,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should emit Transfer event on transferFrom', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => token.transferFrom(holder1, holder3, value, {from: holder2}))
@@ -200,6 +214,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should totalSupply not changed on transferFrom', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => token.transferFrom(holder1, holder3, value, {from: holder2}))
@@ -212,6 +227,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 1000;
     const allowanceValue = 2000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, allowanceValue, {from: holder1}))
     .then(() => asserts.throws(token.transferFrom(holder1, holder3, value+1, {from: holder2})))
@@ -221,6 +237,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should fail on empty balance on transferFrom', () => {
     const value = 1;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => asserts.throws(token.transferFrom(holder1, holder3, value, {from: holder2})))
     ;
@@ -230,6 +247,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const allowanceValue = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, allowanceValue, {from: holder1}))
     .then(() => asserts.throws(token.transferFrom(holder1, holder3, allowanceValue+1, {from: holder2})))
@@ -239,6 +257,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should fail if not allowed on transferFrom', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.approve(holder2, value, {from: holder1}))
     .then(() => asserts.throws(token.transferFrom(holder1, holder3, value, {from: holder3})))
@@ -280,6 +299,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const burnValue = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.burn(burnValue, {from: holder1}))
     .then(() => token.balanceOf(holder1))
@@ -291,6 +311,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const burnValue = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.burn(burnValue, {from: holder1}))
     .then(() => token.totalSupply())
@@ -302,6 +323,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const burnValue = 1000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.burn(burnValue, {from: holder1}))
     .then(result => {
@@ -312,7 +334,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     });
   });
 
-  it('should allow owner burn on burn', () => {
+  it('should allow owner burn when transfer disabled on burn', () => {
     const burnValue = 1000;
     return Promise.resolve()
     .then(() => token.burn(burnValue, {from: OWNER}))
@@ -321,13 +343,60 @@ contract('FlipsiTokenCoin', function(accounts) {
     ;
   });
   
-  it('should change totalSupply owner burn on burn', () => {
+  it('should change totalSupply owner burn when transfer disabled on burn', () => {
     const burnValue = 1000;
     return Promise.resolve()
     .then(() => token.burn(burnValue, {from: OWNER}))
     .then(() => token.totalSupply())
     .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
     ;
+  });
+
+  it('should emit Burn event owner when transfer disabled on burn', () => {
+    const value = 2000;
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 1);
+      assert.equal(result.logs[0].event, 'Burn');
+      assert.equal(result.logs[0].args.burner, OWNER);
+      assert.equal(result.logs[0].args.value.valueOf(), burnValue);
+    });
+  });
+
+  it('should allow owner burn when transfer enabled on burn', () => {
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.enableTransfer())
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(() => token.balanceOf(OWNER))
+    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    ;
+  });
+  
+  it('should change totalSupply owner burn when transfer enabled on burn', () => {
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.enableTransfer())
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(() => token.totalSupply())
+    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    ;
+  });
+
+  it('should emit Burn event owner when transfer enabled on burn', () => {
+    const value = 2000;
+    const burnValue = 1000;
+    return Promise.resolve()
+    .then(() => token.enableTransfer())
+    .then(() => token.burn(burnValue, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 1);
+      assert.equal(result.logs[0].event, 'Burn');
+      assert.equal(result.logs[0].args.burner, OWNER);
+      assert.equal(result.logs[0].args.value.valueOf(), burnValue);
+    });
   });
 
   it('should fail burn zero on burn', () => {
@@ -341,6 +410,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 1000;
     const burnValue = 2000;
     return Promise.resolve()
+    .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => asserts.throws(token.burn(burnValue, {from: holder1})))
     ;
@@ -353,6 +423,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     ;
   });
 
+
   // FlipsiTokenCoin
   it('should have name, symbol and decimals', () => {
     return Promise.resolve()
@@ -364,6 +435,376 @@ contract('FlipsiTokenCoin', function(accounts) {
     .then(asserts.equal(TOKENDECIMALS))
     ;
   });
+
+  it('should allow on setSaleAgent', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.crowdSaleAddr())
+    .then(asserts.equal(0))
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.crowdSaleAddr())
+    .then(asserts.equal(holder1))
+    ;
+  });
+
+  it('should set allowance to SaleAgent on setSaleAgent', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should emit SetSaleAgent on setSaleAgent', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 3);
+      assert.equal(result.logs[2].event, 'SetSaleAgent');
+      assert.equal(result.logs[2].args.agent, holder1);
+      assert.equal(result.logs[2].args.value.valueOf(), value);
+    });
+  });
+
+  it('should allow crowdSaleAllowance 60% of TOTALSUPPLY on setSaleAgent', () => {
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, CROWDSALEALLOWANCE, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(CROWDSALEALLOWANCE))
+    ;
+  });
+  
+  it('should set max amount on setSaleAgent', () => {
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, 0, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(CROWDSALEALLOWANCE))
+    ;
+  });
+  
+  it('should emit SetSaleAgent when set max amount on setSaleAgent', () => {
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, 0, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 3);
+      assert.equal(result.logs[2].event, 'SetSaleAgent');
+      assert.equal(result.logs[2].args.agent, holder1);
+      assert.equal(result.logs[2].args.value.valueOf(), CROWDSALEALLOWANCE);
+    });
+  });
+
+  it('should fail when amountForSale more then crowdSaleAllowance on setSaleAgent', () => {
+    return Promise.resolve()
+    .then(() => asserts.throws(token.setSaleAgent(holder1, CROWDSALEALLOWANCE.add(1), {from: OWNER})))
+    ;
+  });
+  
+  it('should allow change SaleAgent on setSaleAgent', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(holder2, value, {from: OWNER}))
+    .then(() => token.crowdSaleAddr())
+    .then(asserts.equal(holder2))
+    ;
+  });
+
+  it('should allow reset old saleAgent allowance when change SaleAgent on setSaleAgent', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(holder2, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(0))
+    ;
+  });
+  
+  it('should fail not owner on setSaleAgent', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.setSaleAgent(holder1, value, {from: holder2})))
+    ;
+  });
+  
+  it('should fail when transfer enabled on setSaleAgent', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.enableTransfer())
+    .then(() => asserts.throws(token.setSaleAgent(holder1, value, {from: OWNER})))
+    ;
+  });
+  
+  it('should allow on setBountyAdminAddr', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.bountyAddr())
+    .then(asserts.equal(0))
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.bountyAddr())
+    .then(asserts.equal(holder1))
+    ;
+  });
+
+  it('should set allowance to bountyAddr on setBountyAdminAddr', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should emit SetBountyAdminAddr on setBountyAdminAddr', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 3);
+      assert.equal(result.logs[2].event, 'SetBountyAdminAddr');
+      assert.equal(result.logs[2].args.admin, holder1);
+      assert.equal(result.logs[2].args.value.valueOf(), value);
+    });
+  });
+
+  it('should allow BOUNTYALLOWANCE on setBountyAdminAddr', () => {
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, BOUNTYALLOWANCE, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(BOUNTYALLOWANCE))
+    ;
+  });
+  
+  it('should set max amount on setBountyAdminAddr', () => {
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, 0, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(BOUNTYALLOWANCE))
+    ;
+  });
+  
+  it('should emit SetBountyAdminAddr when set max amount on setBountyAdminAddr', () => {
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, 0, {from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 3);
+      assert.equal(result.logs[2].event, 'SetBountyAdminAddr');
+      assert.equal(result.logs[2].args.admin, holder1);
+      assert.equal(result.logs[2].args.value.valueOf(), BOUNTYALLOWANCE);
+    });
+  });
+
+  it('should fail when amountForSale more than bountyAllowance on setBountyAdminAddr', () => {
+    return Promise.resolve()
+    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, BOUNTYALLOWANCE.add(1), {from: OWNER})))
+    ;
+  });
+  
+  it('should allow change BountyAdminAddr on setBountyAdminAddr', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(holder2, value, {from: OWNER}))
+    .then(() => token.bountyAddr())
+    .then(asserts.equal(holder2))
+    ;
+  });
+
+  it('should allow reset old BountyAdminAddr allowance when change SaleAgent on setBountyAdminAddr', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(holder2, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(0))
+    ;
+  });
+  
+  it('should fail not owner on setBountyAdminAddr', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, value, {from: holder2})))
+    ;
+  });
+  
+  it('should fail when transfer enabled on setBountyAdminAddr', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.enableTransfer())
+    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, value, {from: OWNER})))
+    ;
+  });
+  
+  it('should allow on enableTransfer', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.transferEnabled())
+    .then(asserts.equal(false))
+    .then(() => token.enableTransfer({from: OWNER}))
+    .then(() => token.transferEnabled())
+    .then(asserts.equal(true))
+    ;
+  });
+
+  it('should fail not owner on enableTransfer', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.enableTransfer({from: holder2})))
+    ;
+  });
+  
+  it('should reset saleAgent on enableTransfer', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.enableTransfer({from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(0))
+    ;
+  });
+
+  it('should reset BountyAdminAddr on enableTransfer', () => {
+    const value = 1000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.enableTransfer({from: OWNER}))
+    .then(() => token.allowance(OWNER, holder1))
+    .then(asserts.equal(0))
+    ;
+  });
+
+  it('should emit AllowTransfer on enableTransfer', () => {
+    return Promise.resolve()
+    .then(() => token.enableTransfer({from: OWNER}))
+    .then(result => {
+      assert.equal(result.logs.length, 3);
+      assert.equal(result.logs[2].event, 'AllowTransfer');
+    });
+  });
+
+  it('should change owner balance on transferOwnership', () => {
+    const NEWOWNER = holder3;
+    return Promise.resolve()
+    .then(() => token.transferOwnership(NEWOWNER))
+    .then(() => token.balanceOf(NEWOWNER))
+    .then(asserts.equal(TOTALSUPPLY))
+  });
+  
+  it('should allow agent when transfer disabled on transferFrom', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should allow bauntyAdmin when transfer disabled on transferFrom', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should fail not from owner on owner transferFrom', () => {
+    const value = 2000;
+    const tranferValue = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: OWNER})))
+    ;
+  });
+  
+  it('should fail not from owner on agent transferFrom', () => {
+    const value = 2000;
+    const tranferValue = 1000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: holder1})))
+    ;
+  });
+  
+  it('should fail not from owner on baunty transferFrom', () => {
+    const value = 2000;
+    const tranferValue = 1000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: holder1})))
+    ;
+  });
+  
+  it('should allow agent when transfer disabled after change owner on transferFrom', () => {
+    const value = 2000;
+    const NEWOWNER = holder3;
+    return Promise.resolve()
+    .then(() => token.transferOwnership(NEWOWNER))
+    .then(() => token.setSaleAgent(holder1, value, {from: NEWOWNER}))
+    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should allow bauntyAdmin when transfer disabled after change owner on transferFrom', () => {
+    const value = 2000;
+    const NEWOWNER = holder3;
+    return Promise.resolve()
+    .then(() => token.transferOwnership(NEWOWNER))
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: NEWOWNER}))
+    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: holder1}))
+    .then(() => token.balanceOf(holder2))
+    .then(asserts.equal(value))
+    ;
+  });
+  
+  it('should fail on owner transfer', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => asserts.throws(token.transfer(holder1, value,{from: OWNER})))
+    ;
+  });
+    
+  it('should fail on agent transfer', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder1, value, {from: holder1}))
+    .then(() => asserts.throws(token.transfer(holder2, value,{from: holder1})))
+    ;
+  });
+    
+  it('should fail on bountyAdmin transfer', () => {
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder1, value, {from: holder1}))
+    .then(() => asserts.throws(token.transfer(holder2, value,{from: holder1})))
+    ;
+  });
+    
+  //~ it('should fail not owner burn when transfer disabled on burn', () => {
+    //~ const value = 2000;
+    //~ const burnValue = 1000;
+    //~ return Promise.resolve()
+    //~ .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    //~ .then(() => token.transfer(holder2, value, {from: holder1}))
+    //~ ;
+  //~ });
+  
  
   
 });
