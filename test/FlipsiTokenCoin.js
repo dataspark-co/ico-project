@@ -12,7 +12,10 @@ contract('FlipsiTokenCoin', function(accounts) {
   const holder1 = accounts[1];
   const holder2 = accounts[2];
   const holder3 = accounts[3];
-  //~ const TOTALSUPPLY = parseInt(web3.toWei(20000000));
+  const agentAcc = accounts[9];
+  const bountyAcc = accounts[8];
+
+    //~ const TOTALSUPPLY = parseInt(web3.toWei(20000000));
   const TOKENNAME = "Flipsi Token";
   const TOKENSYMBOL = "FLP";
   const TOTALTOKENS = 20000000;
@@ -279,10 +282,10 @@ contract('FlipsiTokenCoin', function(accounts) {
     return Promise.resolve()
     .then(() => token.transferOwnership(holder1, {from: OWNER}))
     .then(result => {
-      assert.equal(result.logs.length, 1);
-      assert.equal(result.logs[0].event, 'OwnershipTransferred');
-      assert.equal(result.logs[0].args.previousOwner, OWNER);
-      assert.equal(result.logs[0].args.newOwner, holder1);
+      assert.equal(result.logs.length, 2);
+      assert.equal(result.logs[1].event, 'OwnershipTransferred');
+      assert.equal(result.logs[1].args.previousOwner, OWNER);
+      assert.equal(result.logs[1].args.newOwner, holder1);
     });
     ;
   });
@@ -441,17 +444,17 @@ contract('FlipsiTokenCoin', function(accounts) {
     return Promise.resolve()
     .then(() => token.crowdSaleAddr())
     .then(asserts.equal(0))
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
     .then(() => token.crowdSaleAddr())
-    .then(asserts.equal(holder1))
+    .then(asserts.equal(agentAcc))
     ;
   });
 
   it('should set allowance to SaleAgent on setSaleAgent', () => {
     const value = 1000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, agentAcc))
     .then(asserts.equal(value))
     ;
   });
@@ -459,45 +462,45 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should emit SetSaleAgent on setSaleAgent', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
     .then(result => {
       assert.equal(result.logs.length, 3);
       assert.equal(result.logs[2].event, 'SetSaleAgent');
-      assert.equal(result.logs[2].args.agent, holder1);
+      assert.equal(result.logs[2].args.agent, agentAcc);
       assert.equal(result.logs[2].args.value.valueOf(), value);
     });
   });
 
   it('should allow crowdSaleAllowance 60% of TOTALSUPPLY on setSaleAgent', () => {
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, CROWDSALEALLOWANCE, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setSaleAgent(agentAcc, CROWDSALEALLOWANCE, {from: OWNER}))
+    .then(() => token.allowance(OWNER, agentAcc))
     .then(asserts.equal(CROWDSALEALLOWANCE))
     ;
   });
   
   it('should set max amount on setSaleAgent', () => {
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, 0, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setSaleAgent(agentAcc, 0, {from: OWNER}))
+    .then(() => token.allowance(OWNER, agentAcc))
     .then(asserts.equal(CROWDSALEALLOWANCE))
     ;
   });
   
   it('should emit SetSaleAgent when set max amount on setSaleAgent', () => {
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, 0, {from: OWNER}))
+    .then(() => token.setSaleAgent(agentAcc, 0, {from: OWNER}))
     .then(result => {
       assert.equal(result.logs.length, 3);
       assert.equal(result.logs[2].event, 'SetSaleAgent');
-      assert.equal(result.logs[2].args.agent, holder1);
+      assert.equal(result.logs[2].args.agent, agentAcc);
       assert.equal(result.logs[2].args.value.valueOf(), CROWDSALEALLOWANCE);
     });
   });
 
   it('should fail when amountForSale more then crowdSaleAllowance on setSaleAgent', () => {
     return Promise.resolve()
-    .then(() => asserts.throws(token.setSaleAgent(holder1, CROWDSALEALLOWANCE.add(1), {from: OWNER})))
+    .then(() => asserts.throws(token.setSaleAgent(agentAcc, CROWDSALEALLOWANCE.add(1), {from: OWNER})))
     ;
   });
   
@@ -505,18 +508,18 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 1000;
     return Promise.resolve()
     .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.setSaleAgent(holder2, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
     .then(() => token.crowdSaleAddr())
-    .then(asserts.equal(holder2))
+    .then(asserts.equal(agentAcc))
     ;
   });
 
   it('should allow reset old saleAgent allowance when change SaleAgent on setSaleAgent', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
     .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.setSaleAgent(holder2, value, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.allowance(OWNER, agentAcc))
     .then(asserts.equal(0))
     ;
   });
@@ -524,7 +527,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should fail not owner on setSaleAgent', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => asserts.throws(token.setSaleAgent(holder1, value, {from: holder2})))
+    .then(() => asserts.throws(token.setSaleAgent(agentAcc, value, {from: holder2})))
     ;
   });
   
@@ -532,7 +535,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     return Promise.resolve()
     .then(() => token.enableTransfer())
-    .then(() => asserts.throws(token.setSaleAgent(holder1, value, {from: OWNER})))
+    .then(() => asserts.throws(token.setSaleAgent(agentAcc, value, {from: OWNER})))
     ;
   });
   
@@ -541,17 +544,17 @@ contract('FlipsiTokenCoin', function(accounts) {
     return Promise.resolve()
     .then(() => token.bountyAddr())
     .then(asserts.equal(0))
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
     .then(() => token.bountyAddr())
-    .then(asserts.equal(holder1))
+    .then(asserts.equal(bountyAcc))
     ;
   });
 
   it('should set allowance to bountyAddr on setBountyAdminAddr', () => {
     const value = 1000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
+    .then(() => token.allowance(OWNER, bountyAcc))
     .then(asserts.equal(value))
     ;
   });
@@ -559,45 +562,45 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should emit SetBountyAdminAddr on setBountyAdminAddr', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
     .then(result => {
       assert.equal(result.logs.length, 3);
       assert.equal(result.logs[2].event, 'SetBountyAdminAddr');
-      assert.equal(result.logs[2].args.admin, holder1);
+      assert.equal(result.logs[2].args.admin, bountyAcc);
       assert.equal(result.logs[2].args.value.valueOf(), value);
     });
   });
 
   it('should allow BOUNTYALLOWANCE on setBountyAdminAddr', () => {
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, BOUNTYALLOWANCE, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setBountyAdminAddr(bountyAcc, BOUNTYALLOWANCE, {from: OWNER}))
+    .then(() => token.allowance(OWNER, bountyAcc))
     .then(asserts.equal(BOUNTYALLOWANCE))
     ;
   });
   
   it('should set max amount on setBountyAdminAddr', () => {
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, 0, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.setBountyAdminAddr(bountyAcc, 0, {from: OWNER}))
+    .then(() => token.allowance(OWNER, bountyAcc))
     .then(asserts.equal(BOUNTYALLOWANCE))
     ;
   });
   
   it('should emit SetBountyAdminAddr when set max amount on setBountyAdminAddr', () => {
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, 0, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, 0, {from: OWNER}))
     .then(result => {
       assert.equal(result.logs.length, 3);
       assert.equal(result.logs[2].event, 'SetBountyAdminAddr');
-      assert.equal(result.logs[2].args.admin, holder1);
+      assert.equal(result.logs[2].args.admin, bountyAcc);
       assert.equal(result.logs[2].args.value.valueOf(), BOUNTYALLOWANCE);
     });
   });
 
   it('should fail when amountForSale more than bountyAllowance on setBountyAdminAddr', () => {
     return Promise.resolve()
-    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, BOUNTYALLOWANCE.add(1), {from: OWNER})))
+    .then(() => asserts.throws(token.setBountyAdminAddr(bountyAcc, BOUNTYALLOWANCE.add(1), {from: OWNER})))
     ;
   });
   
@@ -605,18 +608,18 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 1000;
     return Promise.resolve()
     .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.setBountyAdminAddr(holder2, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
     .then(() => token.bountyAddr())
-    .then(asserts.equal(holder2))
+    .then(asserts.equal(bountyAcc))
     ;
   });
 
-  it('should allow reset old BountyAdminAddr allowance when change SaleAgent on setBountyAdminAddr', () => {
+  it('should allow reset old BountyAdminAddr allowance when change BountyAdmin on setBountyAdminAddr', () => {
     const value = 1000;
     return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
     .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.setBountyAdminAddr(holder2, value, {from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.allowance(OWNER, bountyAcc))
     .then(asserts.equal(0))
     ;
   });
@@ -624,7 +627,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should fail not owner on setBountyAdminAddr', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, value, {from: holder2})))
+    .then(() => asserts.throws(token.setBountyAdminAddr(bountyAcc, value, {from: holder2})))
     ;
   });
   
@@ -632,7 +635,7 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     return Promise.resolve()
     .then(() => token.enableTransfer())
-    .then(() => asserts.throws(token.setBountyAdminAddr(holder1, value, {from: OWNER})))
+    .then(() => asserts.throws(token.setBountyAdminAddr(bountyAcc, value, {from: OWNER})))
     ;
   });
   
@@ -657,9 +660,9 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should reset saleAgent on enableTransfer', () => {
     const value = 1000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
     .then(() => token.enableTransfer({from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.allowance(OWNER, agentAcc))
     .then(asserts.equal(0))
     ;
   });
@@ -667,9 +670,9 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should reset BountyAdminAddr on enableTransfer', () => {
     const value = 1000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
     .then(() => token.enableTransfer({from: OWNER}))
-    .then(() => token.allowance(OWNER, holder1))
+    .then(() => token.allowance(OWNER, bountyAcc))
     .then(asserts.equal(0))
     ;
   });
@@ -694,8 +697,8 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should allow agent when transfer disabled on transferFrom', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: agentAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
     ;
@@ -704,8 +707,8 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should allow bauntyAdmin when transfer disabled on transferFrom', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: bountyAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
     ;
@@ -715,8 +718,8 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const tranferValue = 1000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: agentAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
     .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: OWNER})))
@@ -727,11 +730,11 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const tranferValue = 1000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: agentAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
-    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: holder1})))
+    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: agentAcc})))
     ;
   });
   
@@ -739,11 +742,11 @@ contract('FlipsiTokenCoin', function(accounts) {
     const value = 2000;
     const tranferValue = 1000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder2, value, {from: holder1}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, holder2, value, {from: bountyAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
-    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: holder1})))
+    .then(() => asserts.throws(token.transferFrom(holder2, holder3, tranferValue,{from: bountyAcc})))
     ;
   });
   
@@ -752,8 +755,8 @@ contract('FlipsiTokenCoin', function(accounts) {
     const NEWOWNER = holder3;
     return Promise.resolve()
     .then(() => token.transferOwnership(NEWOWNER))
-    .then(() => token.setSaleAgent(holder1, value, {from: NEWOWNER}))
-    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: holder1}))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: NEWOWNER}))
+    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: agentAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
     ;
@@ -764,8 +767,8 @@ contract('FlipsiTokenCoin', function(accounts) {
     const NEWOWNER = holder3;
     return Promise.resolve()
     .then(() => token.transferOwnership(NEWOWNER))
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: NEWOWNER}))
-    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: holder1}))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: NEWOWNER}))
+    .then(() => token.transferFrom(NEWOWNER, holder2, value, {from: bountyAcc}))
     .then(() => token.balanceOf(holder2))
     .then(asserts.equal(value))
     ;
@@ -781,18 +784,18 @@ contract('FlipsiTokenCoin', function(accounts) {
   it('should fail on agent transfer', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder1, value, {from: holder1}))
-    .then(() => asserts.throws(token.transfer(holder2, value,{from: holder1})))
+    .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, agentAcc, value, {from: agentAcc}))
+    .then(() => asserts.throws(token.transfer(holder2, value,{from: agentAcc})))
     ;
   });
     
   it('should fail on bountyAdmin transfer', () => {
     const value = 2000;
     return Promise.resolve()
-    .then(() => token.setBountyAdminAddr(holder1, value, {from: OWNER}))
-    .then(() => token.transferFrom(OWNER, holder1, value, {from: holder1}))
-    .then(() => asserts.throws(token.transfer(holder2, value,{from: holder1})))
+    .then(() => token.setBountyAdminAddr(bountyAcc, value, {from: OWNER}))
+    .then(() => token.transferFrom(OWNER, bountyAcc, value, {from: bountyAcc}))
+    .then(() => asserts.throws(token.transfer(holder2, value,{from: bountyAcc})))
     ;
   });
     
@@ -800,8 +803,8 @@ contract('FlipsiTokenCoin', function(accounts) {
     //~ const value = 2000;
     //~ const burnValue = 1000;
     //~ return Promise.resolve()
-    //~ .then(() => token.setSaleAgent(holder1, value, {from: OWNER}))
-    //~ .then(() => token.transfer(holder2, value, {from: holder1}))
+    //~ .then(() => token.setSaleAgent(agentAcc, value, {from: OWNER}))
+    //~ .then(() => token.transfer(holder2, value, {from: agentAcc}))
     //~ ;
   //~ });
   
