@@ -233,8 +233,12 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
         return super.transfer(_to, _value);
     }
 
-    //function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
- 
+    function transferFrom(address _from, address _to, uint256 _value) public onlyWhenTransferEnabled returns (bool) {
+        if (!transferEnabled) {
+            require(_from == owner );
+        }
+        return super.transferFrom(_from, _to, _value);
+    }
     /**
      * Enables the ability of anyone to transfer their tokens. This can
      * only be called by the token owner. Once enabled, it is not
@@ -256,7 +260,7 @@ contract FlipsiTokenCoin is BurnableToken, Ownable {
      * @param _value    The amount of tokens to burn in mini-QSP
      */
     function burn(uint256 _value) public  {
-        require(transferEnabled || msg.sender == owner);
+        require(msg.sender == owner);
         super.burn(_value);
     }
 }
