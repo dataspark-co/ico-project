@@ -1,8 +1,8 @@
 const Reverter = require('./helpers/reverter');
 const Asserts = require('./helpers/asserts');
-const FlipsiTokenCoin = artifacts.require('FlipsiTokenCoin');
+const FlipsiToken = artifacts.require('FlipsiToken');
     
-contract('FlipsiTokenCoin', function(accounts) {
+contract('FlipsiToken', function(accounts) {
   const reverter = new Reverter(web3);
   afterEach('revert', reverter.revert);
 
@@ -30,7 +30,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   //~ let TOTALSUPPLY;
     
   before('setup', () => {
-    return FlipsiTokenCoin.deployed()
+    return FlipsiToken.deployed()
     .then(instance => token = instance)
     .then(() => token.decimals())
     //~ .then(decimals => TOTALSUPPLY = web3.toBigNumber(TOTALTOKENS).mul(web3.toBigNumber(10).pow(decimals)) )//* math.pow(10,token.decimals()
@@ -452,7 +452,7 @@ contract('FlipsiTokenCoin', function(accounts) {
   });
 
 
-  // FlipsiTokenCoin
+  // FlipsiToken
   it('should have name, symbol and decimals', () => {
     return Promise.resolve()
     .then(() => token.name())
