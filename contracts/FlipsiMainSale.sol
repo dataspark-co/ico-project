@@ -5,7 +5,7 @@ import './math/SafeMath.sol';
 import './FlipsiToken.sol';
 import './FlipsiCrowdsale.sol';
 
-contract FlipsiSale is  FlipsiCrowsale {
+contract FlipsiMainSale is  FlipsiCrowdsale {
 
     using SafeMath for uint256;
 
@@ -59,6 +59,16 @@ contract FlipsiSale is  FlipsiCrowsale {
         }
     }
 
+    /**
+     * The owner can call this function to withdraw the funds that
+     * have been sent to this contract for the crowdsale subject to
+     * the funding goal having been reached. The funds will be sent
+     * to the beneficiary specified when the crowdsale was created.
+     */
+    function ownerSafeWithdrawal() external onlyOwner afterDeadline {
+        require(tokensSold > softcap);
+        super.ownerSafeWithdrawal();
+    }
 
   /**
     * Add bonuses for sender regarding bonuses schedule

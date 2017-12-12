@@ -17,7 +17,7 @@ contract FlipsiCrowdsale is Pausable{
     uint hardcap = 70000000;
 
     // Keeps track of the amount of tokens raised
-    uint public tokensRaised;
+    uint public tokensSold;
 
     // Keeps track of the amount of wei raised
     uint public amountRaised;
@@ -89,9 +89,10 @@ contract FlipsiCrowdsale is Pausable{
         if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
             revert();
         }else{
-            totalBuyed.add(amountFlp);
+            tokensSold.add(amountFlp);
         }
     }
+
 
     /**
      * The owner can call this function to withdraw the funds that
@@ -99,8 +100,7 @@ contract FlipsiCrowdsale is Pausable{
      * the funding goal having been reached. The funds will be sent
      * to the beneficiary specified when the crowdsale was created.
      */
-    function ownerSafeWithdrawal() external onlyOwner nonReentrant {
-        require(fundingGoalReached);
+    function ownerSafeWithdrawal() external onlyOwner afterDeadline{
         uint balanceToSend = this.balance;
         beneficiary.transfer(balanceToSend);
     }
@@ -149,7 +149,7 @@ contract FlipsiCrowdsale is Pausable{
         saleClosed = true;
     }
 
-    
+
     /**
      * Returns the current time.
      * Useful to abstract calls to "now" for tests.
