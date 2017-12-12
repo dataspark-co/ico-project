@@ -1,4 +1,4 @@
-var FlipsiToken = artifacts.require('./FlipsiTokenCoin.sol');
+var FlipsiToken = artifacts.require('./FlipsiToken.sol');
 
 module.exports = deployer => {
   deployer.deploy(FlipsiToken);
