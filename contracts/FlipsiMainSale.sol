@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import './lifecycle/Pausable.sol';
-import './math/SafeMath.sol';
+import './Pausable.sol';
+import '../math/SafeMath.sol';
 import './FlipsiToken.sol';
 import './FlipsiCrowdsale.sol';
 
@@ -19,19 +19,18 @@ contract FlipsiMainSale is  FlipsiCrowdsale {
      * Constructor for a crowdsale of QuantstampToken tokens.
      *
      * @param ifSuccessfulSendTo            the beneficiary of the fund
-     * @param minimumContributionInWei      minimum contribution (in wei)
      * @param start                         the start time (UNIX timestamp)
      * @param durationInMinutes             the duration of the crowdsale in minutes
-     * @param rateQspToEther                the conversion rate from QSP to Ether
+     * @param rateFlpToEther                the conversion rate from QSP to Ether
      * @param addressOfTokenUsedAsReward    address of the token being sold
      */
-    function FlipsiSale(
+    function FlipsiMainSale (
         address ifSuccessfulSendTo,
         uint start,
         uint durationInMinutes,
         uint rateFlpToEther,
         address addressOfTokenUsedAsReward
-    ) {
+    ) public {
         require(durationInMinutes > 0);
 
         startTime = start;
@@ -65,7 +64,7 @@ contract FlipsiMainSale is  FlipsiCrowdsale {
      * the funding goal having been reached. The funds will be sent
      * to the beneficiary specified when the crowdsale was created.
      */
-    function ownerSafeWithdrawal() external onlyOwner afterDeadline {
+    function ownerSafeWithdrawal() public onlyOwner afterDeadline {
         require(tokensSold > softcap);
         super.ownerSafeWithdrawal();
     }
@@ -78,19 +77,19 @@ contract FlipsiMainSale is  FlipsiCrowdsale {
     uint bonusTokens = 0;
     
     // First bonus period
-    if (now < "2017-01-10 00:00:00") {
+    if (now <  startTime + 7 days) {
       bonusTokens = tokensAmount.div(100).mul(30);
       
     // Second bonus period
-    } else if (now < "2017-01-18 00:00:00") {
+    } else if (now <startTime + 14 days ) {
       bonusTokens = tokensAmount.div(100).mul(20);
       
     // Third bonus period
-    } else if (now < "2017-01-26 00:00:00") {
+    } else if (now < startTime + 21 days) {
       bonusTokens = tokensAmount.div(100).mul(10);
     
     // Fourth bonus period
-    } else if (now < "2017-02-02 00:00:00") {
+    } else if (now < startTime + 28 days) {
       bonusTokens = tokensAmount.div(100).mul(5);
     }
     

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import './lifecycle/Pausable.sol';
-import './math/SafeMath.sol';
+import './Pausable.sol';
+import '../math/SafeMath.sol';
 import './FlipsiToken.sol';
 
 contract FlipsiCrowdsale is Pausable{
@@ -60,7 +60,7 @@ contract FlipsiCrowdsale is Pausable{
      * tokens are transferred to the sender, and that the correct
      * number of tokens are sent according to the current rate.
      */
-    function () payable whenNotPaused beforeDeadline afterStartTime saleNotClosed {
+    function () public payable whenNotPaused beforeDeadline afterStartTime saleNotClosed {
         require(msg.value >= minContribution);
 
         // Update the sender's balance of wei contributed and the amount raised
@@ -78,14 +78,14 @@ contract FlipsiCrowdsale is Pausable{
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //TODO ADD CHECKING THAT WE HAVEN'T ENAUGHT TOKENS TO SEND INVESTOR AND SEND HIM MAXIMIM AMOUNT AND RETURN UNSPENT MONEYS
 
-        allocateTokens(_to,msg.sender, numTokens);
+        allocateTokens(msg.sender, numTokens);
     }
 
 
     //private
     function allocateTokens(address _to, uint amountFlp) private {
 
-        tokens = amountFlp + getBonus(amountFlp);
+        uint tokens = amountFlp + getBonus(amountFlp);
         if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
             revert();
         }else{
@@ -100,7 +100,7 @@ contract FlipsiCrowdsale is Pausable{
      * the funding goal having been reached. The funds will be sent
      * to the beneficiary specified when the crowdsale was created.
      */
-    function ownerSafeWithdrawal() external onlyOwner afterDeadline{
+    function ownerSafeWithdrawal() public onlyOwner afterDeadline{
         uint balanceToSend = this.balance;
         beneficiary.transfer(balanceToSend);
     }
@@ -114,10 +114,9 @@ contract FlipsiCrowdsale is Pausable{
      * are in units of wei and mini-QSP. Every digit counts.
      *
      * @param _to            the recipient of the tokens
-     * @param amountWei     the amount contributed in wei
-     * @param amountMiniFlp the amount of tokens transferred in Flp
+     * @param amountFlp     the amount contributed in tokens
      */
-    function proxyBuyerBTC(address _to, uint amountFlp, uint investedSatoshi, string bitcoinAddress) external
+    function proxyBuyerBTC(address _to, uint amountFlp) external
             onlyOwner //TODO CHANGE TO ONLY PROXYBUYER
             whenNotPaused beforeDeadline afterStartTime saleNotClosed
     {
@@ -137,7 +136,7 @@ contract FlipsiCrowdsale is Pausable{
         minContribution = minContributionInTokens * _rate;
     }
 
-    function gerRate() external {
+    function getRate() external constant returns(uint) {
         return rate;
     }
 
@@ -154,7 +153,7 @@ contract FlipsiCrowdsale is Pausable{
      * Returns the current time.
      * Useful to abstract calls to "now" for tests.
     */
-    function currentTime() constant returns (uint _currentTime) {
+    function currentTime() public constant returns (uint _currentTime) {
         return now;
     }
 

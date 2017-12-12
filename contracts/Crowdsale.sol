@@ -17,7 +17,7 @@ contract CommonSale is Pausable {
   uint public totalHardcap;
   uint public totalInvested;
 
-  FlipsiTokenCoin public token;
+  FlipsiToken public token;
 
 
   modifier saleIsOn() {
@@ -56,7 +56,7 @@ contract CommonSale is Pausable {
   
 // TODO remove 
   function setToken(address newToken) public onlyOwner {
-    token = FlipsiTokenCoin(newToken);
+    token = FlipsiToken(newToken);
   }
 
   function lastSaleDate() public constant returns(uint) {
@@ -218,12 +218,12 @@ contract Mainsale is CommonSale {
 
 contract Configurator is Ownable {
 
-  FlipsiTokenCoin public token; 
+  FlipsiToken public token; 
   Presale public presale;
   Mainsale public mainsale;
 
   function deploy() public onlyOwner {
-    token = new FlipsiTokenCoin();
+    token = new FlipsiToken();
     presale = new Presale();
     presale.setToken(token);
     presale.setStart(1516858400); // TODO: update it

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import './lifecycle/Pausable.sol';
-import './math/SafeMath.sol';
+import './Pausable.sol';
+import '../math/SafeMath.sol';
 import './FlipsiToken.sol';
 import './FlipsiCrowdsale.sol';
 
@@ -13,10 +13,9 @@ contract FlipsiPreSale is FlipsiCrowdsale {
      * Constructor for a crowdsale of QuantstampToken tokens.
      *
      * @param ifSuccessfulSendTo            the beneficiary of the fund
-     * @param minimumContributionInWei      minimum contribution (in wei)
      * @param start                         the start time (UNIX timestamp)
      * @param durationInMinutes             the duration of the crowdsale in minutes
-     * @param rateQspToEther                the conversion rate from QSP to Ether
+     * @param rateFlpToEther                the conversion rate from QSP to Ether
      * @param addressOfTokenUsedAsReward    address of the token being sold
      */
     function FlipsiPreSale(
@@ -26,7 +25,7 @@ contract FlipsiPreSale is FlipsiCrowdsale {
         uint rateFlpToEther,
         uint presaleHardcap,
         address addressOfTokenUsedAsReward
-    ) {
+    ) public {
         require(durationInMinutes > 0);
 
         startTime = start;
