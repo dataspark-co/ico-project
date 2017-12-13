@@ -714,9 +714,57 @@ contract('FlipsiToken', function(accounts) {
   it('should change owner balance on transferOwnership', () => {
     const NEWOWNER = holder3;
     return Promise.resolve()
-    .then(() => token.transferOwnership(NEWOWNER))
+    .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
     .then(() => token.balanceOf(NEWOWNER))
     .then(asserts.equal(TOTALSUPPLY))
+  });
+  
+  it('should change agent allowance on transferOwnership', () => {
+    const NEWOWNER = holder3;
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(agentAcc, value,{from: OWNER}))
+    .then(() => token.allowance(NEWOWNER,agentAcc))
+    .then(asserts.equal(0))
+    .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
+    .then(() => token.allowance(NEWOWNER,agentAcc))
+    .then(asserts.equal(value))
+  });
+  
+  it('should zero old owner agent allowance on transferOwnership', () => {
+    const NEWOWNER = holder3;
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setSaleAgent(agentAcc, value,{from: OWNER}))
+    .then(() => token.allowance(OWNER,agentAcc))
+    .then(asserts.equal(value))
+    .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
+    .then(() => token.allowance(OWNER,agentAcc))
+    .then(asserts.equal(0))
+  });
+  
+  it('should change bountyAdmin allowance on transferOwnership', () => {
+    const NEWOWNER = holder3;
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(bountyAcc, value,{from: OWNER}))
+    .then(() => token.allowance(NEWOWNER,bountyAcc))
+    .then(asserts.equal(0))
+    .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
+    .then(() => token.allowance(NEWOWNER,bountyAcc))
+    .then(asserts.equal(value))
+  });
+  
+  it('should zero old owner bountyAdmin allowance on transferOwnership', () => {
+    const NEWOWNER = holder3;
+    const value = 2000;
+    return Promise.resolve()
+    .then(() => token.setBountyAdminAddr(bountyAcc, value,{from: OWNER}))
+    .then(() => token.allowance(OWNER,bountyAcc))
+    .then(asserts.equal(value))
+    .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
+    .then(() => token.allowance(OWNER,bountyAcc))
+    .then(asserts.equal(0))
   });
   
   it('should allow agent when transfer disabled on transferFrom', () => {

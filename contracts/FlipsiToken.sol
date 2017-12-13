@@ -220,6 +220,10 @@ contract FlipsiToken is BurnableToken, Ownable {
 
     function transferOwnership(address newOwner) public onlyOwner {
       super.transfer(newOwner, balanceOf(owner));
+      allowed[newOwner][crowdSaleAddr] = allowed[msg.sender][crowdSaleAddr];
+      allowed[msg.sender][crowdSaleAddr] = 0;
+      allowed[newOwner][bountyAddr] = allowed[msg.sender][bountyAddr];
+      allowed[msg.sender][bountyAddr] = 0;
       super.transferOwnership(newOwner);
     }
 
