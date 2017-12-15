@@ -8,14 +8,10 @@ module.exports = (deployer, network, accounts) => {
   const beneficiary = accounts[1];
   const presaleHardcap = web3.toBigNumber(1000000).mul(web3.toBigNumber(10).pow(8));
   const token = accounts[2];
-  console.log("HHHHHHHHHHHHHHHHHHHHHHHH");
-  console.log(beneficiary);
-  console.log(presaleHardcap);
-  console.log(FlipsiToken.address);
   deployer.deploy(FlipsiToken)
 	.then(function() {
     console.log("FlipsiToken.address", FlipsiToken.address);
-		return deployer.deploy(FlipsiPreSale, FlipsiToken.address, start, durationInMinutes, rateFlpToEther, presaleHardcap, accounts[1]);
+		return deployer.deploy(FlipsiPreSale,beneficiary, start, durationInMinutes, rateFlpToEther, presaleHardcap, FlipsiToken.address);
     })
     ;
 };
