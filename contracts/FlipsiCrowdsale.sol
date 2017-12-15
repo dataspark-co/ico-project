@@ -14,7 +14,7 @@ contract FlipsiCrowdsale is Pausable{
     uint public endTime;
 
     //presale tokens amount hardcap
-    uint hardcap = 70000000;
+    uint public hardcap = 70000000;
 
     // Keeps track of the amount of tokens raised
     uint public tokensSold;
