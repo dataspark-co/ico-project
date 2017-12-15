@@ -100,14 +100,20 @@ it('should have minContribution by RATE after create', () => {
     .then(asserts.equal(40*RATE))
   });
 
-it.only('should not paused after create', () => {
+it('should not close sale after create', () => {
+    return Promise.resolve()
+    .then(() => crowdsale.saleClosed())
+    .then(asserts.equal(false))
+  });
+
+// PAUSABLE
+it('should not paused after create', () => {
     return Promise.resolve()
     .then(() => crowdsale.paused())
     .then(asserts.equal(false))
   });
 
-// PAUSABLE
-it.only('should allow pause', () => {
+it('should allow pause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(() => crowdsale.paused())
@@ -115,7 +121,7 @@ it.only('should allow pause', () => {
    ;
   });
 
-it.only('should emit Pause event on pause', () => {
+it('should emit Pause event on pause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(result => {
@@ -124,18 +130,18 @@ it.only('should emit Pause event on pause', () => {
     });
   });
 
-it.only('should fail when not owner on pause', () => {
+it('should fail when not owner on pause', () => {
     return Promise.resolve()
     .then(() => asserts.throws(crowdsale.pause( {from: buyer1})))
   });
 
-it.only('should fail when already paused on pause', () => {
+it('should fail when already paused on pause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(() => asserts.throws(crowdsale.pause()))
   });
 
-it.only('should allow unpause', () => {
+it('should allow unpause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(() => crowdsale.unpause())
@@ -144,7 +150,7 @@ it.only('should allow unpause', () => {
    ;
   });
 
-it.only('should emit Unpause event on pause', () => {
+it('should emit Unpause event on pause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(() => crowdsale.unpause())
@@ -154,13 +160,13 @@ it.only('should emit Unpause event on pause', () => {
     });
   });
 
-it.only('should fail when not owner on pause', () => {
+it('should fail when not owner on pause', () => {
     return Promise.resolve()
     .then(() => crowdsale.pause())
     .then(() => asserts.throws(crowdsale.unpause( {from: buyer1})))
   });
 
-it.only('should fail when already paused on pause', () => {
+it('should fail when already paused on pause', () => {
     return Promise.resolve()
     .then(() => asserts.throws(crowdsale.unpause()))
     .then(() => crowdsale.pause())
@@ -169,7 +175,30 @@ it.only('should fail when already paused on pause', () => {
   });
 
 
-/*it.only('should have presale bonus after create', () => {
+// FlipsiCrowdsale
+
+it.only('should allow setRate', () => {
+  const newRate = 10000;
+
+    return Promise.resolve()
+    .then(() => crowdsale.setRate(newRate))
+    .then(() => crowdsale.rate())
+    .then(asserts.equal(newRate))
+   ;
+  });
+
+it('should emit Unpause event on pause', () => {
+    return Promise.resolve()
+    .then(() => crowdsale.pause())
+    .then(() => crowdsale.unpause())
+    .then(result => {
+      assert.equal(result.logs.length, 1);
+      assert.equal(result.logs[0].event, 'Unpause');
+    });
+  });
+
+
+/*it('should have presale bonus after create', () => {
     const testValue1 = 1000*40/100;
     const testValue2 = 1000000;
     const testValue3 = PRESALEHARDCAP;
