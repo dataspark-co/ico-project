@@ -34,6 +34,7 @@ contract FlipsiPreSale is FlipsiCrowdsale {
         hardcap = presaleHardcap;
         beneficiary = ifSuccessfulSendTo;
         tokenReward = FlipsiToken(addressOfTokenUsedAsReward);
+        tokenReward.setSaleAgent(this,1000000);
     }
 
 

@@ -46,6 +46,11 @@ contract FlipsiCrowdsale is Pausable{
     modifier afterStartTime()    { require (currentTime() >= startTime); _; }
     modifier saleNotClosed()    { require (!saleClosed); _; }
 
+    event SetRate(uint256 value);
+    event Terminate();
+    event ProxyBuy(address to, uint value);
+    event Buy(address to, uint pay, uint value);
+    event Debug(address to, uint value);
 
     // interfaces:
     function getBonus(uint tokensAmount) internal constant returns(uint);
@@ -79,6 +84,8 @@ contract FlipsiCrowdsale is Pausable{
             //TODO ADD CHECKING THAT WE HAVEN'T ENAUGHT TOKENS TO SEND INVESTOR AND SEND HIM MAXIMIM AMOUNT AND RETURN UNSPENT MONEYS
 
         allocateTokens(msg.sender, numTokens);
+
+        Buy(msg.sender, amount, numTokens);
     }
 
 
@@ -86,11 +93,13 @@ contract FlipsiCrowdsale is Pausable{
     function allocateTokens(address _to, uint amountFlp) private {
 
         uint tokens = amountFlp + getBonus(amountFlp);
-        if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
+        Debug(_to, tokens);
+        tokenReward.transferFrom(tokenReward.owner(), _to, tokens);
+        /* if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
             revert();
         }else{
             tokensSold.add(amountFlp);
-        }
+        } */
     }
 
 
@@ -116,11 +125,12 @@ contract FlipsiCrowdsale is Pausable{
      * @param _to            the recipient of the tokens
      * @param amountFlp     the amount contributed in tokens
      */
-    function proxyBuyerBTC(address _to, uint amountFlp) external
+    function proxyBuy(address _to, uint amountFlp) public
             onlyOwner //TODO CHANGE TO ONLY PROXYBUYER
             whenNotPaused beforeDeadline afterStartTime saleNotClosed
     {
         allocateTokens(_to, amountFlp);
+        ProxyBuy(_to, amountFlp);
     }
 
 
@@ -134,6 +144,7 @@ contract FlipsiCrowdsale is Pausable{
     function setRate(uint _rate) public onlyOwner {
         rate = _rate;
         minContribution = minContributionInTokens * _rate;
+        SetRate(_rate);
     }
 
     function getRate() external constant returns(uint) {
@@ -146,6 +157,7 @@ contract FlipsiCrowdsale is Pausable{
      */
     function terminate() external onlyOwner {
         saleClosed = true;
+        Terminate();
     }
 
 
