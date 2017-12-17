@@ -50,7 +50,8 @@ contract FlipsiCrowdsale is Pausable{
     event Terminate();
     event ProxyBuy(address to, uint value);
     event Buy(address to, uint pay, uint value);
-    event Debug(address to, uint value);
+    event Debug(string msg, uint value);
+    event DebugAddr(string msg, address addr);
 
     // interfaces:
     function getBonus(uint tokensAmount) internal constant returns(uint);
@@ -65,10 +66,11 @@ contract FlipsiCrowdsale is Pausable{
      * tokens are transferred to the sender, and that the correct
      * number of tokens are sent according to the current rate.
      */
-    function () public payable whenNotPaused beforeDeadline afterStartTime saleNotClosed {
-        require(msg.value >= minContribution);
+    function () public payable  whenNotPaused beforeDeadline afterStartTime saleNotClosed {
+       require(msg.value >= minContribution);
 
         // Update the sender's balance of wei contributed and the amount raised
+
         uint amount = msg.value;
         uint currentBalance = balanceOf[msg.sender];
         balanceOf[msg.sender] = currentBalance.add(amount);
@@ -77,7 +79,7 @@ contract FlipsiCrowdsale is Pausable{
         // Compute the number of tokens to be rewarded to the sender
         // Note: it's important for this calculation that both wei
         // and QSP have the same number of decimal places (18)
-        uint numTokens = amount.mul(rate);
+        uint numTokens = amount.div(rate);
 
         // Transfer the tokens from the crowdsale supply to the sender
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -91,15 +93,12 @@ contract FlipsiCrowdsale is Pausable{
 
     //private
     function allocateTokens(address _to, uint amountFlp) private {
-
-        uint tokens = amountFlp + getBonus(amountFlp);
-        Debug(_to, tokens);
-        tokenReward.transferFrom(tokenReward.owner(), _to, tokens);
-        /* if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
+        uint tokens = amountFlp.add(getBonus(amountFlp));
+        if (!tokenReward.transferFrom(tokenReward.owner(), _to, tokens)) {
             revert();
         }else{
-            tokensSold.add(amountFlp);
-        } */
+            tokensSold = tokensSold.add(tokens);
+        }
     }
 
 
