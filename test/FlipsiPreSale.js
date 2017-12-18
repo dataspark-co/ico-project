@@ -11,6 +11,14 @@ const increaseTime = addSeconds => {
     })
   }
 
+const mineBlock = () => {
+    web3.currentProvider.send({
+        jsonrpc: "2.0", 
+        method: "evm_mine", 
+        params: [], id: 0
+    })
+  }
+
 contract('FlipsiPreSale', function(accounts) {
   const reverter = new Reverter(web3);
   afterEach('revert', reverter.revert);
@@ -54,7 +62,12 @@ contract('FlipsiPreSale', function(accounts) {
     .then(time => startTime = time)
     .then(() => crowdsale.endTime())
     .then(time => endTime = time)
-    .then(reverter.snapshot);
+    .then(reverter.snapshot)
+    ;
+  });
+
+  beforeEach(() => {
+    mineBlock();
   });
 
 it('should have correct token after create', () => {
@@ -365,6 +378,7 @@ it('should change tokensSold on proxyBuy', () => {
 it('should fail when not owner on proxyBuy', () => {
   const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
+    .then(() => mineBlock())
     .then(() => crowdsale.currentTime())
     .then(time => time >= startTime && time < endTime)
     .then(asserts.equal( true ))
