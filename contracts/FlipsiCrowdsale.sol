@@ -14,7 +14,7 @@ contract FlipsiCrowdsale is Pausable{
     uint public endTime;
 
     //presale tokens amount hardcap
-    uint public hardcap = 70000000;
+    uint public hardcap = 70000000 * 10**8;
 
     // Keeps track of the amount of tokens raised
     uint public tokensSold;
@@ -35,7 +35,7 @@ contract FlipsiCrowdsale is Pausable{
     // The crowdsale has a funding goal, cap, deadline, and minimum contribution
  //   uint public fundingGoal;
  //   uint public fundingCap;
-    uint public minContributionInTokens = 40; 
+    uint public minContributionInTokens = 40* 10**8; 
     uint public minContribution; 
 
     bool public saleClosed = false;

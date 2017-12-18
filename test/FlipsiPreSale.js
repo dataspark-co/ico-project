@@ -23,30 +23,37 @@ contract('FlipsiPreSale', function(accounts) {
   const TOTALTOKENS = new web3.toBigNumber(20000000);
   const DECIMALS = web3.toBigNumber(10).pow(TOKENDECIMALS);
   const INITIALSUPPLY = TOTALTOKENS.mul(DECIMALS);
-  const RATE = web3.toWei(1/400,'ether');
-  const MIN_CONTRIBUTION_IN_TOKENS = new web3.toBigNumber(40);
-  const MIN_CONTRIBUTION = MIN_CONTRIBUTION_IN_TOKENS * RATE;
+  const RATE = web3.toWei(1/400,'ether')/DECIMALS;
+  const MIN_CONTRIBUTION_IN_TOKENS = (new web3.toBigNumber(40)).mul(DECIMALS);
+  const MIN_CONTRIBUTION = MIN_CONTRIBUTION_IN_TOKENS.mul(RATE);
   const PRESALE_RATE = 3; // %
   const PRESALEHARDCAP = TOTALTOKENS.mul(3).div(100).mul(DECIMALS);
-  const DURATION = 2; // in minutes
   const BONUS = 40; // %
 
   const buyer1 = accounts[2];
+  
+  const CURRENT_TIME = parseInt((new Date()).valueOf()/1000)-10;
+  const DURATION = 2; // in minutes
+  const START_DATE = CURRENT_TIME + 60*60;
+  const END_DATE = START_DATE + DURATION * 60;
 
-    
     //~ var balance = new BigNumber('131242344353464564564574574567456');
     
   let crowdsale;
   let token;
-  let currentTime; //in seconds
+  let startTime; //in seconds
+  let endTime; //in seconds
   //~ let TOTALSUPPLY;
     
   before('setup', () => {
     return FlipsiPreSale.deployed()
     .then(instance => crowdsale = instance)
     .then(() => crowdsale.tokenReward())
-    .then((tokenReward) => token = FlipsiToken.at(tokenReward))
-    .then(() => currentTime = parseInt((new Date()).valueOf()/1000)) 
+    .then(tokenReward => token = FlipsiToken.at(tokenReward))
+    .then(() => crowdsale.startTime())
+    .then(time => startTime = time)
+    .then(() => crowdsale.endTime())
+    .then(time => endTime = time)
     .then(reverter.snapshot);
   });
 
@@ -81,24 +88,31 @@ it('should have presaleHardcap after create', () => {
     .then(asserts.equal(PRESALEHARDCAP))
   });
 
-it('should have startdate less than 60 sec after now', () => {
+it('should have START_DATE less than startTime', () => {
     return Promise.resolve()
     .then(() => crowdsale.startTime())
-    .then((time) => currentTime - time.toNumber() < 60)
+    .then((time) => START_DATE < time.toNumber())
     .then(asserts.equal(true))
   });
 
-it('should have enddate less than DURATION-1 min after now', () => {
+it('should have START_DATE+1 min more than startTime', () => {
     return Promise.resolve()
-    .then(() => crowdsale.endTime())
-    .then((time) => currentTime+DURATION*60-60 < time.toNumber())
+    .then(() => crowdsale.startTime())
+    .then((time) => START_DATE+60 > time.toNumber())
     .then(asserts.equal(true))
   });
 
-it('should have enddate more than DURATION+1 min after now', () => {
+it('should have END_DATE less than endTime', () => {
     return Promise.resolve()
     .then(() => crowdsale.endTime())
-    .then((time) => currentTime+DURATION*60+60 > time.toNumber())
+    .then((time) => END_DATE < time.toNumber())
+    .then(asserts.equal(true))
+  });
+
+it('should have END_DATE+1 min more than endTime', () => {
+    return Promise.resolve()
+    .then(() => crowdsale.endTime())
+    .then((time) => END_DATE+60 > time.toNumber())
     .then(asserts.equal(true))
   });
 
@@ -237,7 +251,7 @@ it('should fail when not owner on setRate', () => {
   });
 
 // TODO terminate
-it('should allow setRate', () => {
+it('should allow terminate', () => {
   return Promise.resolve()
     .then(() => crowdsale.terminate())
     .then(() => crowdsale.saleClosed())
@@ -245,7 +259,7 @@ it('should allow setRate', () => {
    ;
   });
 
-it('should emit SetRate event on setRate', () => {
+it('should emit Terminate event on terminate', () => {
   return Promise.resolve()
     .then(() => crowdsale.terminate())
     .then(result => {
@@ -254,30 +268,75 @@ it('should emit SetRate event on setRate', () => {
     });
   });
 
-it('should fail when not owner on setRate', () => {
+it('should fail when not owner on terminate', () => {
   return Promise.resolve()
     .then(() => asserts.throws(crowdsale.terminate({from: buyer1})))
   });
 
+// TODO beforeStart
+// NOW time
+it('should fail for now before startTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
+  });
+
+it('should fail for now before startTime on send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
+  });
+
+// BEFORE startTime
+it('should fail before startTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => increaseTime(startTime-time-5))
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
+  });
+
+it('should fail before startTime on send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
+  });
+
 // TODO proxyBuy
-it.only('should allow proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS * DECIMALS;
-  const pay2 = MIN_CONTRIBUTION_IN_TOKENS * 3 * DECIMALS;
+it('should allow proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  const pay2 = MIN_CONTRIBUTION_IN_TOKENS * 3;
  
   return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => increaseTime(startTime-time))
     .then(() => token.balanceOf(buyer1))
     .then(asserts.equal(0))
     .then(() => crowdsale.proxyBuy(buyer1, pay))
     .then(() => token.balanceOf(buyer1))
-    .then(asserts.equal(pay*140/100))
+    .then(asserts.equal(pay*(BONUS+100)/100))
     .then(() => crowdsale.proxyBuy(buyer1, pay2))
     .then(() => token.balanceOf(buyer1))
-    .then(asserts.equal( (pay + pay2)*140/100 ))
+    .then(asserts.equal( pay.add(pay2)*(BONUS+100)/100 ))
    ;
   });
 
-it.only('should emit ProxyBuy event on proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS.add(130) * DECIMALS;
+it('should emit ProxyBuy event on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS.add(130);
 
     return Promise.resolve()
     .then(() => crowdsale.proxyBuy(buyer1, pay))
@@ -289,46 +348,52 @@ it.only('should emit ProxyBuy event on proxyBuy', () => {
     });
   });
 
-it.only('should change tokensSold on proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS * DECIMALS;
-  const pay2 = MIN_CONTRIBUTION_IN_TOKENS * 2 * DECIMALS;
+it('should change tokensSold on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  const pay2 = MIN_CONTRIBUTION_IN_TOKENS * 2;
 
   return Promise.resolve()
     .then(() => crowdsale.proxyBuy(buyer1, pay))
     .then(() => crowdsale.tokensSold())
-    .then(asserts.equal( pay*140/100 ))
+    .then(asserts.equal( pay*(BONUS+100)/100 ))
     .then(() => crowdsale.proxyBuy(buyer1, pay2))
     .then(() => crowdsale.tokensSold())
-    .then(asserts.equal( (pay+pay2)*140/100 ))
+    .then(asserts.equal( pay.add(pay2)*(BONUS+100)/100 ))
    ;
   });
 
-it.only('should fail when not owner on proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS * DECIMALS;
+it('should fail when not owner on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
     .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
   });
 
-it.only('should fail when paused on proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS * DECIMALS;
+it('should fail when paused on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
     .then(() => crowdsale.pause())
     .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay)))
   });
 
 
-it.only('should fail when saleClosed on proxyBuy', () => {
-  const pay = MIN_CONTRIBUTION_IN_TOKENS * DECIMALS;
+it('should fail when saleClosed on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
     .then(() => crowdsale.terminate())
     .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay)))
   });
 
-// TODO proxyBuy beforeStart
-// TODO proxyBuy sfterEnd
-
 // TODO send ether
-it.only('should allow send Ether', () => {
+it('should allow send Ether', () => {
   const amount = web3.toWei(1.0, 'ether');
   const amountTokens = amount / RATE;
 
@@ -337,11 +402,14 @@ it.only('should allow send Ether', () => {
     .then(asserts.equal(0))
     .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
     .then(() => token.balanceOf(buyer1))
-    .then(asserts.equal(amountTokens*140/100))
+    .then(asserts.equal(amountTokens*(BONUS+100)/100))
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => token.balanceOf(buyer1))
+    .then(asserts.equal(amountTokens*2*(BONUS+100)/100))
     ;
   });
 
-it.only('should emit Buy event on send Ether', () => {
+it('should emit Buy event on send Ether', () => {
   const amount = web3.toWei(1.0, 'ether');
   const amountTokens = amount / RATE;
 
@@ -356,8 +424,157 @@ it.only('should emit Buy event on send Ether', () => {
     });
   });
 
+it('should change crowdsale balance on send Ether', () => {
+  const amount = web3.toWei(1.0, 'ether');
+  const amountTokens = amount / RATE;
 
-/*it.only('should fail when saleClosed on proxyBuy', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => crowdsale.balanceOf(buyer1))
+    .then(asserts.equal(amount))
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => crowdsale.balanceOf(buyer1))
+    .then(asserts.equal(amount*2))
+    ;
+  });
+
+it('should change amountRaised on send Ether', () => {
+  const amount = web3.toWei(1.0, 'ether');
+  const amountTokens = amount / RATE;
+
+  return Promise.resolve()
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => crowdsale.amountRaised())
+    .then(asserts.equal(amount))
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => crowdsale.amountRaised())
+    .then(asserts.equal(amount*2))
+    ;
+  });
+
+it('should MIN_CONTRIBUTION allow send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1}))
+    .then(() => token.balanceOf(buyer1))
+    .then(asserts.equal(MIN_CONTRIBUTION_IN_TOKENS*(BONUS+100)/100))
+    ;
+  });
+
+it('should fail less MIN_CONTRIBUTION on send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
+    .then(() => crowdsale.pause())
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION.add(1),from:buyer1})))
+  });
+
+it('should fail when paused on send Ether', () => {
+  const amount = web3.toWei(1.0, 'ether');
+  const amountTokens = amount / RATE;
+
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
+    .then(() => crowdsale.pause())
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:amount,from:buyer1})))
+  });
+
+it('should fail when saleClosed on send Ether', () => {
+  const amount = web3.toWei(1.0, 'ether');
+  const amountTokens = amount / RATE;
+
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= startTime && time < endTime)
+    .then(asserts.equal( true ))
+    .then(() => crowdsale.terminate())
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:amount,from:buyer1})))
+  });
+
+// TODO proxyBuy afterEnd
+// BEFORE endTime
+it('should allow before endTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+ 
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => increaseTime(endTime-time-5))
+    .then(() => crowdsale.proxyBuy(buyer1, pay))
+    .then(() => token.balanceOf(buyer1))
+    .then(asserts.equal(pay*(BONUS+100)/100))
+   ;
+  });
+
+it('should allow send Ether before endTime', () => {
+  const amount = web3.toWei(1.0, 'ether');
+  const amountTokens = amount / RATE;
+
+  return Promise.resolve()
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => token.balanceOf(buyer1))
+    .then(asserts.equal(amountTokens*(BONUS+100)/100))
+    ;
+  });
+
+// AFTER endTime
+it('should fail after endTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => increaseTime(endTime-time))
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= endTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
+  });
+
+it('should fail for now before startTime on send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time >= endTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
+  });
+
+/*it('should fail for now before startTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
+  });
+
+it('should fail for now before startTime on send Ether', () => {
+  return Promise.resolve()
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
+  });
+
+// BEFORE startTime
+it('should fail before startTime on proxyBuy', () => {
+  const pay = MIN_CONTRIBUTION_IN_TOKENS;
+  return Promise.resolve()
+    .then(() => increaseTime(START_DATE-CURRENT_TIME-10))
+    .then(() => crowdsale.setRate(RATE))
+    .then(() => crowdsale.currentTime())
+    .then(time => time < startTime)
+    .then(asserts.equal( true ))
+    .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
+  });
+
+*//*it('should fail when saleClosed on proxyBuy', () => {
   const pay = RATE * MIN_CONTRIBUTION_IN_TOKENS;
 
   return Promise.resolve()
