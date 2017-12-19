@@ -308,8 +308,8 @@ it('should fail for now before startTime on send Ether', () => {
 // BEFORE startTime
 it('should fail before startTime on proxyBuy', () => {
   const pay = MIN_CONTRIBUTION_IN_TOKENS;
+
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => increaseTime(startTime-time-5))
     .then(() => crowdsale.setRate(RATE))
@@ -321,7 +321,6 @@ it('should fail before startTime on proxyBuy', () => {
 
 it('should fail before startTime on send Ether', () => {
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => time < startTime)
     .then(asserts.equal( true ))
@@ -334,7 +333,6 @@ it('should allow proxyBuy', () => {
   const pay2 = MIN_CONTRIBUTION_IN_TOKENS * 3;
  
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => increaseTime(startTime-time))
     .then(() => token.balanceOf(buyer1))
@@ -378,7 +376,6 @@ it('should change tokensSold on proxyBuy', () => {
 it('should fail when not owner on proxyBuy', () => {
   const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
-    .then(() => mineBlock())
     .then(() => crowdsale.currentTime())
     .then(time => time >= startTime && time < endTime)
     .then(asserts.equal( true ))
@@ -476,7 +473,6 @@ it('should MIN_CONTRIBUTION allow send Ether', () => {
 
 it('should fail less MIN_CONTRIBUTION on send Ether', () => {
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => time >= startTime && time < endTime)
     .then(asserts.equal( true ))
@@ -489,7 +485,6 @@ it('should fail when paused on send Ether', () => {
   const amountTokens = amount / RATE;
 
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => time >= startTime && time < endTime)
     .then(asserts.equal( true ))
@@ -502,7 +497,6 @@ it('should fail when saleClosed on send Ether', () => {
   const amountTokens = amount / RATE;
 
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => time >= startTime && time < endTime)
     .then(asserts.equal( true ))
@@ -516,7 +510,6 @@ it('should allow before endTime on proxyBuy', () => {
   const pay = MIN_CONTRIBUTION_IN_TOKENS;
  
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => increaseTime(endTime-time-5))
     .then(() => crowdsale.proxyBuy(buyer1, pay))
@@ -540,23 +533,37 @@ it('should allow send Ether before endTime', () => {
 it('should fail after endTime on proxyBuy', () => {
   const pay = MIN_CONTRIBUTION_IN_TOKENS;
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => increaseTime(endTime-time))
-    .then(() => crowdsale.setRate(RATE))
+    .then(() => mineBlock())
     .then(() => crowdsale.currentTime())
     .then(time => time >= endTime)
     .then(asserts.equal( true ))
     .then(() => asserts.throws(crowdsale.proxyBuy(buyer1, pay,{from: buyer1})))
   });
 
-it('should fail for now before startTime on send Ether', () => {
+it('should fail after endTime on send Ether', () => {
   return Promise.resolve()
-    .then(() => crowdsale.setRate(RATE))
     .then(() => crowdsale.currentTime())
     .then(time => time >= endTime)
     .then(asserts.equal( true ))
     .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
+  });
+
+it.only('should allow safeWithdrawal after endTime', () => {
+  var amount;
+
+  return Promise.resolve()
+    .then(() => web3.eth.getBalance(BENEFICIARY))
+    .then(asserts.equal(0))
+    .then(() => web3.eth.getBalance(crowdsale.address))
+    .then(_amount => amount = _amount)
+    .then(() => crowdsale.ownerSafeWithdrawal({value:amount,from:buyer1}))
+    .then(() => token.getBalance(BENEFICIARY))
+    .then(asserts.equal(amount))
+    .then(() => web3.eth.getBalance(crowdsale.address))
+    .then(asserts.equal(0))
+    ;
   });
 
 /*it('should fail for now before startTime on proxyBuy', () => {
