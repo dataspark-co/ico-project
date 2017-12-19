@@ -14,6 +14,9 @@ contract('FlipsiToken', function(accounts) {
   const holder3 = accounts[3];
   const agentAcc = accounts[9];
   const bountyAcc = accounts[8];
+  const foundersAcc = accounts[7];
+  const teamAcc = accounts[6];
+  const devteamAcc = accounts[5];
 
     //~ const TOTALSUPPLY = parseInt(web3.toWei(20000000));
   const TOKENNAME = "Flipsi Token";
@@ -23,7 +26,13 @@ contract('FlipsiToken', function(accounts) {
   const TOTALSUPPLY = web3.toBigNumber(TOTALTOKENS).mul(web3.toBigNumber(10).pow(TOKENDECIMALS)) 
   const CROWDSALEALLOWANCE = TOTALSUPPLY.mul(60).div(100);
   const BOUNTYALLOWANCE = TOTALSUPPLY.mul(5).div(100);
-    
+
+  const FOUNDERS_RATE = 100; // 10x %
+  const TEAM_RATE = 100; // 10x %
+  const DEVTEAM_RATE = 5; // 10x %
+  
+  const OWNER_BALANCE = TOTALSUPPLY.mul(1000-FOUNDERS_RATE-TEAM_RATE-DEVTEAM_RATE).div(1000);
+  
     //~ var balance = new BigNumber('131242344353464564564574574567456');
     
   let token;
@@ -33,8 +42,6 @@ contract('FlipsiToken', function(accounts) {
     return FlipsiToken.deployed()
     .then(instance => token = instance)
     .then(() => token.decimals())
-    //~ .then(decimals => TOTALSUPPLY = web3.toBigNumber(TOTALTOKENS).mul(web3.toBigNumber(10).pow(decimals)) )//* math.pow(10,token.decimals()
-    //~ .then(decimals => )
     .then(reverter.snapshot);
   });
 
@@ -45,10 +52,10 @@ contract('FlipsiToken', function(accounts) {
     .then(asserts.equal(TOTALSUPPLY))
   });
 
-  it('should totalSupply on owner balance after create', () => {
+  it('should totalSupply without accrual on owner balance after create', () => {
     return Promise.resolve()
     .then(() => token.balanceOf(OWNER))
-    .then(asserts.equal(TOTALSUPPLY))
+    .then(asserts.equal(OWNER_BALANCE))
     ;
   });
 
@@ -64,11 +71,12 @@ contract('FlipsiToken', function(accounts) {
 
   it('should sub balance of sender on transfer', () => {
     const value = 1000;
+  
     return Promise.resolve()
     .then(() => token.enableTransfer())
     .then(() => token.transfer(holder1, value, {from: OWNER}))
     .then(() => token.balanceOf(OWNER))
-    .then(asserts.equal(TOTALSUPPLY.sub(value)))
+    .then(asserts.equal(OWNER_BALANCE.sub(value)))
     ;
   });
   
@@ -99,7 +107,7 @@ contract('FlipsiToken', function(accounts) {
   it('should fail on over TOTALSUPPLY balance on transfer', () => {
     return Promise.resolve()
     .then(() => token.enableTransfer())
-    .then(() => asserts.throws(token.transfer(holder1, TOTALSUPPLY.add(1), {from: OWNER})))
+    .then(() => asserts.throws(token.transfer(holder1, OWNER_BALANCE.add(1), {from: OWNER})))
     ;
   });
   
@@ -342,7 +350,7 @@ contract('FlipsiToken', function(accounts) {
     return Promise.resolve()
     .then(() => token.burn(burnValue, {from: OWNER}))
     .then(() => token.balanceOf(OWNER))
-    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    .then(asserts.equal(OWNER_BALANCE.sub(burnValue)))
     ;
   });
   
@@ -374,7 +382,7 @@ contract('FlipsiToken', function(accounts) {
     .then(() => token.enableTransfer())
     .then(() => token.burn(burnValue, {from: OWNER}))
     .then(() => token.balanceOf(OWNER))
-    .then(asserts.equal(TOTALSUPPLY.sub(burnValue)))
+    .then(asserts.equal(OWNER_BALANCE.sub(burnValue)))
     ;
   });
   
@@ -437,17 +445,15 @@ contract('FlipsiToken', function(accounts) {
   //~ });
   
   it('should fail owner burn above balance on burn', () => {
-    const burnValue = 2000;
     return Promise.resolve()
-    .then(() => asserts.throws(token.burn(TOTALSUPPLY.add(1), {from: OWNER})))
+    .then(() => asserts.throws(token.burn(OWNER_BALANCE.add(1), {from: OWNER})))
     ;
   });
 
   it('should fail owner burn above balance transfer enabled on burn', () => {
-    const burnValue = 2000;
     return Promise.resolve()
     .then(() => token.enableTransfer())
-    .then(() => asserts.throws(token.burn(TOTALSUPPLY.add(1), {from: OWNER})))
+    .then(() => asserts.throws(token.burn(OWNER_BALANCE.add(1), {from: OWNER})))
     ;
   });
 
@@ -461,6 +467,27 @@ contract('FlipsiToken', function(accounts) {
     .then(asserts.equal(TOKENSYMBOL))
     .then(() => token.decimals())
     .then(asserts.equal(TOKENDECIMALS))
+    ;
+  });
+
+  it('should have accrual for founders', () => {
+    return Promise.resolve()
+    .then(() => token.balanceOf(foundersAcc))
+    .then(asserts.equal(TOTALSUPPLY.mul(FOUNDERS_RATE).div(1000)))
+    ;
+  });
+
+  it('should have accrual for team', () => {
+    return Promise.resolve()
+    .then(() => token.balanceOf(teamAcc))
+    .then(asserts.equal(TOTALSUPPLY.mul(TEAM_RATE).div(1000)))
+    ;
+  });
+
+  it('should have accrual for devteam', () => {
+    return Promise.resolve()
+    .then(() => token.balanceOf(devteamAcc))
+    .then(asserts.equal(TOTALSUPPLY.mul(DEVTEAM_RATE).div(1000)))
     ;
   });
 
@@ -716,7 +743,7 @@ contract('FlipsiToken', function(accounts) {
     return Promise.resolve()
     .then(() => token.transferOwnership(NEWOWNER,{from: OWNER}))
     .then(() => token.balanceOf(NEWOWNER))
-    .then(asserts.equal(TOTALSUPPLY))
+    .then(asserts.equal(OWNER_BALANCE))
   });
   
   it('should change agent allowance on transferOwnership', () => {
@@ -915,7 +942,5 @@ contract('FlipsiToken', function(accounts) {
     .then(() => asserts.throws(token.burn(burnValue,{from: holder2})))
     ;
   });
-  
- 
   
 });

@@ -8,11 +8,14 @@ module.exports = (deployer, network, accounts) => {
   const rateFlpToEther = web3.toWei(1/400,'ether')/(web3.toBigNumber(10).pow(8))//new web3.BigNumber(1000);
   const beneficiary = accounts[1];
   const presaleHardcap = web3.toBigNumber(20000000*3/100).mul(web3.toBigNumber(10).pow(8));
+  const foundersAcc = accounts[7];
+  const teamAcc = accounts[6];
+  const devteamAcc = accounts[5];
 
   var token;
 
   deployer.then(() => {
-    return FlipsiToken.new();
+    return FlipsiToken.new(foundersAcc, teamAcc, devteamAcc);
   })
   .then(instance => token = instance)
   .then(() => {
