@@ -171,9 +171,12 @@ contract FlipsiToken is BurnableToken, Ownable {
         _;
     }
     
-    function FlipsiToken() public {
+    function FlipsiToken(address founders, address team, address devteam) public {
         totalSupply = initialSupply;
         balances[msg.sender] = initialSupply;
+        super.transfer(founders, initialSupply.div(10)); // 10%
+        super.transfer(team, initialSupply.div(10)); // 10%
+        super.transfer(devteam, initialSupply.div(200)); // 0.5%
     }
 
     /**
