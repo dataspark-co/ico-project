@@ -525,7 +525,7 @@ it('should allow before endTime on proxyBuy', () => {
  
   return Promise.resolve()
     .then(() => crowdsale.currentTime())
-    .then(time => increaseTime(endTime-time-5))
+    .then(time => increaseTime(endTime-time-10))
     .then(() => crowdsale.proxyBuy(buyer1, pay))
     .then(() => token.balanceOf(buyer1))
     .then(asserts.equal(pay*(BONUS+100)/100))
@@ -549,46 +549,25 @@ it('should allow safeWithdrawal after endTime', () => {
   var oldBalance;
 
   return Promise.resolve()
-    .then(() => token.balanceOf(buyer1))
+//    .then(() => token.balanceOf(buyer1))
     .then(() => web3.eth.getBalance(BENEFICIARY))
     .then(balance => oldBalance = balance)
-    .then(() => console.log('oldBalance', oldBalance))
-    .then(() => web3.eth.getBalance(crowdsale.address))
-    .then(_amount => amount = _amount)
-    .then(() => console.log('CROWDSALE BALANCE', amount))
-    .then(() => crowdsale.startTime())
-    .then(time => console.log('TIME 1', time))
-    .then(() => crowdsale.endTime())
-    .then(time => console.log('TIME 2', time))
-    .then(() =>   console.log('COPY 2', endTime))
-    .then(() => crowdsale.currentTime())
-    .then(time => console.log('TIME 3', time))
-
+      .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
 
     .then(() => crowdsale.currentTime())
-/*    .then(time => increaseTime(endTime-time-10))
-    .then(() => mineBlock())
-*/    .then(() => crowdsale.currentTime())
-    .then(time => console.log('TIME 4', time))
-    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+     .then(time => increaseTime(endTime-time))
+     .then(() => mineBlock())
     .then(() => crowdsale.currentTime())
-    .then(time => console.log('TIME 5', time))
-
-
-    .then(() => crowdsale.currentTime())
-    .then(time => increaseTime(endTime-time))
-    .then(() => crowdsale.currentTime())
-    .then(time => time >= endTime)
-    .then(asserts.equal( true ))
+    .then(time =>  time >= endTime)
+     .then(asserts.equal( true ))
 
     .then(() => crowdsale.ownerSafeWithdrawal())
-      .then(() => web3.eth.getBalance(BENEFICIARY))
-      .then(balance => console.log('NEW BALANCE', balance))
+      // .then(() => web3.eth.getBalance(BENEFICIARY))
+      // .then(balance => console.log('NEW BALANCE', balance))
     .then(() => web3.eth.getBalance(BENEFICIARY))
     .then(balance => assert.equal(balance.valueOf(), oldBalance.add(amount)))
     .then(() => web3.eth.getBalance(crowdsale.address))
     .then(asserts.equal(0))
-      .then(balance => console.log('AMOUNT', oldBalance.add(amount)))
     ;
   });
 
