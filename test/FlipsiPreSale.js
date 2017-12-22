@@ -304,7 +304,13 @@ it('should fail for now before startTime on send Ether', () => {
     .then(asserts.equal( true ))
     .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
   });
-// TODO ownerSafeWithdrawal NOW
+
+// ownerSafeWithdrawal NOW
+it('should fail now before startTime on safeWithdrawal ', () => {
+  return Promise.resolve()
+    .then(() => asserts.throws(crowdsale.ownerSafeWithdrawal()))
+    ;
+});
 
 // BEFORE startTime
 it('should fail before startTime on proxyBuy', () => {
@@ -327,7 +333,12 @@ it('should fail before startTime on send Ether', () => {
     .then(asserts.equal( true ))
     .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
   });
-// TODO ownerSafeWithdrawal before START
+// ownerSafeWithdrawal before START
+it('should fail before startTime on safeWithdrawal ', () => {
+  return Promise.resolve()
+    .then(() => asserts.throws(crowdsale.ownerSafeWithdrawal()))
+    ;
+});
 
 // proxyBuy
 it('should allow proxyBuy', () => {
@@ -516,7 +527,12 @@ it('should fail when saleClosed on send Ether', () => {
     .then(() => crowdsale.terminate())
     .then(() => asserts.throws(crowdsale.sendTransaction({value:amount,from:buyer1})))
   });
-// TODO ownerSafeWithdrawal after START
+// ownerSafeWithdrawal after START
+it('should fail after startTime on safeWithdrawal ', () => {
+  return Promise.resolve()
+    .then(() => asserts.throws(crowdsale.ownerSafeWithdrawal()))
+    ;
+});
 
 // proxyBuy afterEnd
 // BEFORE endTime
@@ -542,7 +558,14 @@ it('should allow send Ether before endTime', () => {
     .then(asserts.equal(amountTokens*(BONUS+100)/100))
     ;
   });
-// TODO ownerSafeWithdrawal before END
+
+// ownerSafeWithdrawal before END
+it('should fail safeWithdrawal before endTime on safeWithdrawal ', () => {
+  return Promise.resolve()
+    .then(() => asserts.throws(crowdsale.ownerSafeWithdrawal()))
+    ;
+});
+
 // allow ownerSafeWithdrawal 
 it('should allow safeWithdrawal after endTime', () => {
   var amount = web3.toWei(1.0, 'ether');
@@ -550,17 +573,18 @@ it('should allow safeWithdrawal after endTime', () => {
 
   return Promise.resolve()
 //    .then(() => token.balanceOf(buyer1))
-    .then(() => web3.eth.getBalance(BENEFICIARY))
-    .then(balance => oldBalance = balance)
-      .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
+    .then(() => crowdsale.sendTransaction({value:amount,from:buyer1}))
 
     .then(() => crowdsale.currentTime())
-     .then(time => increaseTime(endTime-time))
-     .then(() => mineBlock())
+    .then(time => increaseTime(endTime-time))
+    .then(() => mineBlock())
     .then(() => crowdsale.currentTime())
     .then(time =>  time >= endTime)
-     .then(asserts.equal( true ))
+    .then(asserts.equal( true ))
 
+    .then(() => asserts.throws(crowdsale.ownerSafeWithdrawal({from:BENEFICIARY})))
+    .then(() => web3.eth.getBalance(BENEFICIARY))
+    .then(balance => oldBalance = balance)
     .then(() => crowdsale.ownerSafeWithdrawal())
       // .then(() => web3.eth.getBalance(BENEFICIARY))
       // .then(balance => console.log('NEW BALANCE', balance))
@@ -586,6 +610,5 @@ it('should fail after endTime on send Ether', () => {
     .then(() => asserts.throws(crowdsale.sendTransaction({value:MIN_CONTRIBUTION,from:buyer1})))
   });
 
-// TODO ownerSafeWithdrawal
 
 });
